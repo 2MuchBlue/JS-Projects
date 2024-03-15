@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbit Racers</title>
+
+</head>
+<body>
+    <style>
+        @font-face {
+            font-family: monogram;
+            src: url(../resources/monogram-extended.ttf);
+        }
+
+        body{
+            font-family: monogram;
+            color: #f5f5dc;
+            background-color: #170142;
+            margin: 0px;
+            padding: 0px;
+        }
+
+        dialog{
+            position: absolute;
+
+            top: 0px;
+            left: 0px;
+
+            margin: 0px;
+            padding: 20px;
+
+            border: none;
+
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+
+            background-color: #170142be;
+            color: #f5f5dc;
+        }
+
+        ::backdrop{
+            background-image: black;
+        }
+    </style>
+
+    <dialog open>
+        <div style="vertical-align: text-top; font-size: 24px;">Player Count: <input step="1" min="1" max="4" type="range" id="playerCount" style="height: 12px;" > <span id="playerDisplay">1</span></div>
+        <form method="dialog">
+            <button onclick="init()" autofocus>Got It!</button>
+        </form>
+    </dialog>
+    <!-- Main Stuff -->
+    
+    <div style="display: flex;">
+        <canvas id="mainCanvas" width=128 height=128 style="width: min(50vw); image-rendering: pixelated; border: 10px solid rgb(157, 98, 98)"></canvas>
+        <div style="display: flex;">
+            <div style="display: flex; flex-direction: column;">
+                <input id="planetMassSlider" value=0.1 orient="vertical" style="width: 30px; height: 100%; appearance:slider-vertical" step="any" min="0" max="0.2" type="range">
+                <span id="massDisplay" style="overflow: hidden; width: 30px; text-align: center;">1</span>
+            </div>
+            <button onclick="nextPlayer()">Next Player!</button>
+            <div style="margin: 10px; padding: 10px; max-width: 50vw;">
+                <h1>Orbit Racers!</h1>
+                <h2>A Turn Based Racing Game</h3>
+                <div style="margin-left: 5px;">
+                    <h3>Overview</h3>
+                    This is a game about racing around a spacy track that only kinda works. Its based on the honor system and needs a mouse and keyboard.
+                    <h3>Controls</h3>
+                    [W][A][S][D] : Move Camera<br>
+                    Primary Mouse : Move Planet<br>
+                    Slider On The Side : Change 'Planet Mass' (influance)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="extraData.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
