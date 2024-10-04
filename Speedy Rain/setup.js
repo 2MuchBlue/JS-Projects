@@ -5,6 +5,7 @@ const canvasHalfWidth = canvasElement.width * 0.5;
 const canvasHalfHeight = canvasElement.height * 0.5;
 
 const deg2rad = Math.PI / 180;
+const rad2deg = 180 / Math.PI;
 
 // ===== Input =====
     canvasElement.addEventListener('mousemove', function(e){
