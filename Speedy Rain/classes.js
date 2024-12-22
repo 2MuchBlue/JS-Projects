@@ -37,17 +37,19 @@ class Door {
 }
 
 class Player {
-    constructor( name, controlScheme, horSpeed, jumpPower ){
+    constructor( name, controlScheme, horSpeed, jumpPower, gainingSpeed = 0.001, slowingSpeed = 0.025 ){
         this.name = name;
         this.controlScheme = controlScheme;
         this.horizontalSpeed = horSpeed;
+        this.slowingSpeed = slowingSpeed; // friction on movement key release
+        this.gainingSpeed = gainingSpeed; // friction on movement key down
         this.jumpPower = jumpPower;
         this.real = {
             x : 19,
             y : 19
         }
 
-        this.velocity = {
+        this.motion = {
             x : 0,
             y : 0
         }
@@ -58,7 +60,9 @@ class Player {
 
         this.coyoteValues = {
             "timeOffTheLedge" : 100
-        }
+        },
+
+        this.physObject = true;
     }
 
     get hitbox() { // semi-hardcoded hitbox thing
@@ -118,16 +122,16 @@ class Player {
 
         //let vertical = ( -btn(this.controlScheme, "up") + btn(this.controlScheme, "down")) * this.horizontalSpeed * Time.deltaTime;
 
-        this.velocity.y += Time.deltaTime * 0.005;
-        this.real.y += this.velocity.y * Time.deltaTime * 0.2;
+        this.motion.y += Time.deltaTime * 0.005;
+        this.real.y += this.motion.y * Time.deltaTime * 0.2;
         if(this.hitbox){ // if on ground...
             while(this.hitbox){ // while on ground...
-                this.real.y -= Math.abs(this.velocity.y) / this.velocity.y; // get out of the ground in the oppesite direction you went in
+                this.real.y -= Math.abs(this.motion.y) / this.motion.y; // get out of the ground in the oppesite direction you went in
             }
-            if((Math.abs(this.velocity.y) / this.velocity.y) === 1){
+            if((Math.abs(this.motion.y) / this.motion.y) === 1){
                 this.extraData.canCoyoteTime = true;
             }
-            this.velocity.y = 0;
+            this.motion.y = 0;
             this.extraData.lastOnGroundTime = Time.now;
         }
 
@@ -135,13 +139,15 @@ class Player {
 
         // checks if 1) has pressed the jump button recently, 2) making sure you haven't already jumped, 3) tests if you were on the ground in the last 150 milisecs.
         if(btnPressedWithin(this.controlScheme, "up", 150) === 1 && this.extraData.canCoyoteTime && this.extraData.lastOnGroundTime + 150 > Time.now){
-            this.velocity.y = -this.jumpPower;
+            this.motion.y = -this.jumpPower;
             this.extraData.canCoyoteTime = false;
             this.extraData.hasJumped = true;
         }
 
         let rawHorz = ( -btn(this.controlScheme, "left") + btn(this.controlScheme, "right"));
-        this.velocity.x = rawHorz * this.horizontalSpeed * Time.deltaTime;
+        let targetmotion = {x : 0, y : 0};
+        targetmotion.x = rawHorz * this.horizontalSpeed * Time.deltaTime;
+        this.motion.x += (targetmotion.x - this.motion.x) * 0.4 * Time.deltaTime * ( Math.abs(rawHorz) > 0.2 ? ( this.gainingSpeed ) : (this.slowingSpeed));
 
         if(rawHorz > 0.2){
             this.extraData.flipped = true;
@@ -149,18 +155,19 @@ class Player {
             this.extraData.flipped = false;
         }
 
-        this.real.x += this.velocity.x;
+        this.real.x += this.motion.x;
         if(this.hitbox){
             while(this.hitbox){
-                this.real.x -= Math.abs(this.velocity.x) / this.velocity.x;
+                this.real.x -= Math.abs(this.motion.x) / this.motion.x;
             }
+            this.motion.x = 0;
             this.extraData.canWallJump = true;
             this.extraData.lastWallTouchTime = Time.now;
         }
 
         // checks if 1) has pressed the jump button recently, 2) making sure you haven't already jumped, 3) tests if you were on the ground in the last 150 milisecs.
         /*if(btn(this.controlScheme, "up") === 1 && !this.extraData.hasWallJumped && this.extraData.canWallJump && this.extraData.lastWallTouchTime + 150 > Time.now){
-            this.velocity.y = -this.jumpPower;
+            this.motion.y = -this.jumpPower;
             this.extraData.canWallJump = false;
             this.extraData.hasWallJumped = true;
         }*/
@@ -217,7 +224,7 @@ class Terminal {
 
             if(!this.collectted){
                 for(let i = 0; i < 20 * this.height; i++){
-                    particleList.push(new BasicParticle(this.x + 9.5, this.y + 9.5, (Math.random() + 3) * 2 , Math.random() * 10, 4000));
+                    particleList.push(new BasicParticle(this.x + 9.5, this.y + 9.5, (Math.random() + 3) * 2 , Math.random() * 10, 2000 + Math.random() * 2000));
                 }
             }
             this.collectted = true;
@@ -246,6 +253,8 @@ class BasicParticle {
         this.lifetime = lifetime;
         this.spawnTime = Time.now;
         this.age = 0;
+
+        this.physObject = true;
     }
 
     get x(){
@@ -310,6 +319,8 @@ class DustParticle {
         this.lifetime = lifetime;
         this.spawnTime = Time.now;
         this.age = 0;
+
+        this.physObject = true;
     }
 
     get x(){
@@ -343,6 +354,77 @@ class DustParticle {
     }
 }
 
-class BasicTile {
-    constructor(){}
+class ImpulseVolume { // sets velocity to a set value
+    constructor(centerX, centerY, motionX = 0, motionY = 0, checkAreaFunction = (gameObjectToTest) => {return (Math2.distance(gameObjectToTest, new vec2(centerX, centerY)) < 19 ); }){
+        this.x = centerX;
+        this.y = centerY;
+
+        this.checkAreaFunction = checkAreaFunction;
+
+        this.motion = {
+            x : motionX,
+            y : motionY
+        };
+    }
+
+    draw(){
+        ctx.fillRect(this.x - 4 - Camera.x, this.y - 4 - Camera.y, 8, 8);
+    }
+
+    tick(){
+        for(let i = 0; i < Players.length; i++){
+            let element = Players[i];
+            if(element.physObject !== undefined){
+                if(this.checkAreaFunction(element)){
+                    if(this.motion.x !== 0){
+                        element.motion.x = this.motion.x;
+                    }
+                    if(this.motion.y !== 0){
+                        element.motion.y = this.motion.y;
+                    }
+                }
+            }
+        }
+        this.draw();
+    }
+}
+
+class AccelerationVolume { // adds momentum to an object
+    constructor(centerX, centerY, motionX = 0, motionY = 0, checkAreaFunction = (gameObjectToTest) => {return (Math2.distance(gameObjectToTest, new vec2(centerX, centerY)) < 19 ); }){
+        this.x = centerX;
+        this.y = centerY;
+
+        this.checkAreaFunction = checkAreaFunction;
+
+        this.motion = {
+            x : motionX,
+            y : motionY
+        };
+    }
+
+    draw(){
+        ctx.fillRect(this.x - 4 - Camera.x, this.y - 4 - Camera.y, 8, 8);
+    }
+
+    tick(){
+        this.checkAllOfArray(Players);
+        this.checkAllOfArray(particleList);
+        this.draw();
+    }
+
+    checkAllOfArray(array){
+        for(let i = 0; i < array.length; i++){
+            let element = array[i];
+            if(element.physObject !== undefined){
+                if(this.checkAreaFunction(element)){
+                    if(this.motion.x !== 0){
+                        element.motion.x += this.motion.x * Time.deltaTime;
+                    }
+                    if(this.motion.y !== 0){
+                        element.motion.y += this.motion.y * Time.deltaTime;
+                    }
+                }
+            }
+        }
+    }
 }

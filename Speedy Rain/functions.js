@@ -1,7 +1,7 @@
 function start(){
     engineUpdate();
 
-    currentLevel = AreaAtlas.LabArea.home;
+    currentLevel = AreaAtlas.LabArea.ParcoreDarcore;
 }
 
 function drawImg( region, x, y, w = -1, h = -1 ){
@@ -17,7 +17,7 @@ function drawImg( region, x, y, w = -1, h = -1 ){
 }
 
 let Players = [
-    new Player("player1", ControlSchemes.Player1, 0.15, 1.5),
+    new Player("player1", ControlSchemes.Player1, 0.2, 1.5, 0.025),
     new Player("player2", ControlSchemes.Player2, 0.15, 1.5)
 ];
 
@@ -59,6 +59,9 @@ function gameUpdate(){
     }
 
     //worldArrow(player2.x + 8, player2.y + 8, 95, 95, "#f0f", "#af2");
+
+    ctx.fillText(`${mouse.x + Camera.x}, ${mouse.y + Camera.y}`, mouse.x, mouse.y);
+    BasicAreaChecks.inBox(19 * 14.5, 19 * 6.5, Players[0].x, Players[0].y, 3, 7)
 }
 
 function drawLevel(useCamera = false, level = currentLevel){
@@ -120,3 +123,20 @@ const ParticlePresets = {
         }
     }
 }
+
+const BasicAreaChecks = {
+    inCircle(centerX, centerY, radius, testX, testY){
+        return (Math2.distance(new vec2(testX, testY), new vec2(centerX, centerY)) <= radius );
+    },
+
+    inBox(centerX, centerY, testX, testY, halfWidth = 9.5, halfHeight = 9.5){
+        ctx.fillRect(centerX - Camera.x, centerY - halfHeight - Camera.y, halfWidth * 2, halfHeight * 2);
+        if( testX <= centerX + halfWidth && testX >= centerX - halfWidth){
+            if( testY <= centerY + halfHeight && testY >= centerY - halfHeight){
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
