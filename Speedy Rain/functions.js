@@ -140,3 +140,14 @@ const BasicAreaChecks = {
     }
 }
 
+const BezierCurveFunctions = {
+    LinearLerp(a, b, t){
+        return ( 1 - t ) * a + b * t;
+    },
+    QuadraticLerp(a, b, c, t){
+        return this.LinearLerp( this.LinearLerp( a, b, t ), this.LinearLerp( b, c, t), t );
+    },
+    CubicLerp( a, b, c, d, t){
+        return this.QuadraticLerp( this.LinearLerp( a, b, t), this.LinearLerp( b, c, t), this.LinearLerp(c, d, t), t );
+    }
+};

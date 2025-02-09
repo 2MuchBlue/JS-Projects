@@ -307,7 +307,11 @@ const AreaAtlas = {
                 new Terminal(19 * 10, 19 * 1, TileAtlas.terminal.term1, 2, "#fff", "#000", 95, 95),
                 //new AccelerationVolume(270, 90, 0, -0.01),
                 new AccelerationVolume(19 * 13.5, 19 * 6.5, 0, -0.01, (thing2test) => { return BasicAreaChecks.inBox(19 * 13.5, 19 * 6.5, thing2test.x, thing2test.y, 10, 5 * 19); } ),
-                //new ImpulseVolume(180, 180, 10, 0)
+                //new ImpulseVolume(180, 180, 10, 0),
+                new SuspendedWireEntity (0, 0, 200, 125, 5),
+                new SuspendedWireEntity (35, 200, 200, 125, 5),
+                new HangingWireEntity(132, 12, 19*3),
+                new HangingWireEntity(135, 12, 19*2.6)
             ]
         },
 

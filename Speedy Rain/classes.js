@@ -428,3 +428,155 @@ class AccelerationVolume { // adds momentum to an object
         }
     }
 }
+
+class SuspendedWireEntity{
+    constructor(x1, y1, x2, y2, droop, swaySpeed = 0.5, color = "#334b66", lineWidth = 4, segments = 10){
+        this.pointA = new vec2(x1, y1);
+        this.pointB = new vec2(x2, y2);
+
+        this.droop = droop;
+        this.swaySpeed = swaySpeed;
+        this.seed = (Math.random() - 0.5) * 180;
+        this.segments = segments;
+
+        this.color = color;
+        this.lineWidth = lineWidth;
+    }
+
+    tick(){
+        this.draw();
+    }
+
+    draw(){
+
+        let sumOfSins = (t) => {
+            let amplatudes = [0.07, 0.01, 0.04, 0.03, 0.01];
+            let waveLengths = [2, 3, 4, 0.5, 0.21];
+            let phases = [1, 0.5, 3, 2, 0.41];
+
+            let sum = 0;
+            for(let i = 0; i < amplatudes.length; i++){
+                sum += amplatudes[i] * Math.sin( t * ( phases[i] * (0.5 * waveLengths[i]) ) );
+            }
+            return sum;
+        }
+
+
+        let windTime = Time.now * 0.001 * this.swaySpeed;
+        let swayDist = 19 * 5;
+        let droopVariance = 0.5 * Math.abs(this.pointA.y - this.pointB.y);
+        ctx.beginPath();
+        ctx.moveTo(this.pointA.x - Camera.x, this.pointA.y - Camera.y);
+        for (let i = 0; i < this.segments + 1; i++ ){
+            ctx.lineTo(
+                BezierCurveFunctions.QuadraticLerp(
+                    this.pointA.x,
+                    ((this.pointA.x + this.pointB.x) * 0.5) + swayDist * (
+                        sumOfSins(windTime + this.seed)
+                    ),
+                    this.pointB.x,
+
+                    i / this.segments
+                ) - Camera.x,
+                BezierCurveFunctions.QuadraticLerp(
+                    this.pointA.y,
+                    Math.max(this.pointA.y, this.pointB.y) + this.droop + droopVariance/* * Math.sin(windTime + this.seed * Math.PI * 2)*/,
+                    this.pointB.y,
+                    
+                    i / this.segments
+                ) - Camera.y
+            );
+        }
+
+        let savedStrokeStuff = {
+            color : ctx.strokeStyle,
+            lineWidth : ctx.lineWidth
+        }
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.lineWidth;
+        ctx.stroke();
+        ctx.strokeStyle = savedStrokeStuff.color;
+        ctx.lineWidth = savedStrokeStuff.lineWidth;
+    }
+
+    
+}
+
+class HangingWireEntity{
+    constructor(x1, y1, droop, swaySpeed = 0.5, color = "#334b66", lineWidth = 4, segments = 10){
+        this.point = new vec2(x1, y1);
+
+        this.droop = droop;
+        this.swaySpeed = swaySpeed;
+        this.seed = (Math.random() - 0.5) * 180;
+        this.segments = segments;
+
+        this.color = color;
+        this.lineWidth = lineWidth;
+    }
+
+    tick(){
+        this.draw();
+    }
+
+    draw(){
+
+        let sumOfSins = (t) => {
+            let amplatudes = [0.07, 0.01, 0.04, 0.03, 0.01];
+            let waveLengths = [2, 3, 4, 0.5, 0.21];
+            let phases = [1, 0.5, 3, 2, 0.41];
+
+            let sum = 0;
+            for(let i = 0; i < amplatudes.length; i++){
+                sum += amplatudes[i] * Math.sin( t * ( phases[i] * (0.5 * waveLengths[i]) ) );
+            }
+            return sum;
+        }
+
+
+        let windTime = Time.now * 0.001 * this.swaySpeed;
+        let swayDist = 19 * 5;
+        let droopVariance = 0.3;
+        ctx.beginPath();
+        ctx.moveTo(this.point.x - Camera.x, this.point.y - Camera.y);
+        
+        let sOsPoint = new vec2( // Sum Of Sins Point
+            swayDist * (
+                sumOfSins(windTime + this.seed)
+            ),
+            this.point.y + this.droop + droopVariance * Math.sin(windTime * Math.PI * 0.2),
+        );
+
+        for (let i = 0; i < this.segments + 1; i++ ){
+            ctx.lineTo(
+                BezierCurveFunctions.QuadraticLerp( // X
+                    this.point.x,
+                    this.point.x + (sOsPoint.x * 0.25),
+                    sOsPoint.x + this.point.x,
+
+                    i / this.segments
+                ) - Camera.x,
+
+                BezierCurveFunctions.QuadraticLerp( // Y
+                    this.point.y,
+                    ((this.point.y + sOsPoint.y) * 0.5),
+                    this.point.y + this.droop,
+                    
+                    i / this.segments
+                ) - Camera.y
+            );
+        }
+
+        let savedStrokeStuff = {
+            color : ctx.strokeStyle,
+            lineWidth : ctx.lineWidth
+        }
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.lineWidth;
+        ctx.stroke();
+        ctx.strokeStyle = savedStrokeStuff.color;
+        ctx.lineWidth = savedStrokeStuff.lineWidth;
+    }
+
+    
+}
