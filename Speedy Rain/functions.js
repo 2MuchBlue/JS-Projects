@@ -1,7 +1,8 @@
 function start(){
     engineUpdate();
 
-    currentLevel = AreaAtlas.LabArea.ParcoreDarcore;
+    changeArea(AreaAtlas.LabArea.WakeUp01);
+    CutSceneAtlas.currentScene = CutSceneAtlas.IntroCutScene;
 }
 
 function drawImg( region, x, y, w = -1, h = -1 ){
@@ -17,11 +18,41 @@ function drawImg( region, x, y, w = -1, h = -1 ){
 }
 
 let Players = [
-    new Player("player1", ControlSchemes.Player1, 0.2, 1.5, 0.025),
-    new Player("player2", ControlSchemes.Player2, 0.15, 1.5)
+    new Player("player1", ControlSchemes.Player1, /*0.15*/ 0.2, 0 /* set to 1.5 in a Lab:JumpGet ItemPickup */, 0.025),
+    //new Player("player2", ControlSchemes.Player2, 0.15, 1.5)
 ];
 
 let particleList = [];
+
+function MasterUpdate(){
+    if(CutSceneAtlas.currentScene !== undefined){
+        cutSceneUpdate();
+    }else{
+        gameUpdate();
+    }
+}
+
+function changeArea(level){
+    currentLevel = level;
+    Camera.real.x = Players[0].real.x - canvasHalfWidth + 9;
+    Camera.real.y = Players[0].real.y - canvasHalfWidth + 9;
+
+    particleList = []; // clears all particles
+
+    if(currentLevel.backdrop !== undefined){
+        canvasElement.style.backgroundImage = `url('${ currentLevel.backdrop.image }')`;
+        canvasElement.style.backgroundSize = `${currentLevel.backdrop.width}px ${currentLevel.backdrop.height}px`;
+    }
+
+    for(let i = 0; i < level.entities.length; i++){
+        try{
+            currentLevel.entities[i]?.start();
+        }
+        catch(error) {
+
+        }
+    }
+}
 
 function gameUpdate(){
     ctx.clearRect(0,0,canvasElement.width, canvasElement.height);
@@ -32,10 +63,20 @@ function gameUpdate(){
     Camera.real.x -= (Camera.real.x - (Players[0].real.x - canvasHalfWidth + 8)) * 0.015 * Time.deltaTime;
     Camera.real.y -= (Camera.real.y - (Players[0].real.y - canvasHalfHeight + 8)) * 0.015 * Time.deltaTime;
 
+    Camera.real.x = ExtraMath.clamp(Camera.real.x, 0, currentLevel.layout[0].length * 19 - 19 * 10);
+    Camera.real.y = ExtraMath.clamp(Camera.real.y, 0, currentLevel.layout.length * 19 - 19 * 10);
+
+    if(currentLevel.backdropEntities !== undefined){
+        for(let i = 0; i < currentLevel.backdropEntities.length; i++){
+            currentLevel.backdropEntities[i].tick();
+        }
+    }
+    
+
     drawLevel(true);
 
     Players[0].tick();
-    Players[1].tick();
+    //Players[1].tick();
     
     //player.draw((key("Space") === 1 ? "run" : "idle"));
 
@@ -60,21 +101,46 @@ function gameUpdate(){
 
     //worldArrow(player2.x + 8, player2.y + 8, 95, 95, "#f0f", "#af2");
 
-    ctx.fillText(`${mouse.x + Camera.x}, ${mouse.y + Camera.y}`, mouse.x, mouse.y);
-    BasicAreaChecks.inBox(19 * 14.5, 19 * 6.5, Players[0].x, Players[0].y, 3, 7)
+    if(devToolsEnabled){
+        ctx.fillStyle = "#fff";
+        if(key("ShiftLeft")){
+            let rounded = {x : Math.floor((mouse.x + Camera.real.x) / 19) * 19, y : Math.floor((mouse.y + Camera.real.y) / 19) * 19};
+            ctx.fillRect(rounded.x - Camera.x, rounded.y - Camera.y, 4, 4);
+            ctx.fillText(`${rounded.x}, ${rounded.y}`, rounded.x - Camera.real.x, rounded.y - Camera.real.y + 19);
+        }else{
+            ctx.fillText(`${mouse.x + Camera.x}, ${mouse.y + Camera.y}`, mouse.x, mouse.y);
+        }
+    }
+
+    // Backdrop Paralax Effect
+    canvasElement.style.backgroundPosition = `${ Camera.real.x * -0.5 }px ${ Camera.real.y * -0.5 }px`;
+    
+    //BasicAreaChecks.inBox(19 * 14.5, 19 * 6.5, Players[0].x, Players[0].y, 3, 7)
+}
+
+function cutSceneUpdate(){
+    CutSceneAtlas.currentScene();
+    gameUpdate();
+}
+
+function drawTileRegion(x, y, regionObj){
+    if(Array.isArray(regionObj.region)){
+        //console.log(Math.round((Time.now - Time.launchTime) * 0.01) % region.length);
+        drawImg(regionObj.region[Math.round((Time.now - Time.launchTime) * regionObj.speed) % regionObj.region.length], (x) - Camera.x, (y) - Camera.y);
+    }else{
+        drawImg(regionObj.region, (x) - Camera.x, (y) - Camera.y);
+    }
 }
 
 function drawLevel(useCamera = false, level = currentLevel){
     for(let y = 0; y < level.layout.length; y++){
         for(let x = 0; x < level.layout[y].length; x++){
-            let levelKey = level.key[level.layout[y][x]];
-            let region = levelKey.region;
-            if(Array.isArray(region)){
-                //console.log(Math.round((Time.now - Time.launchTime) * 0.01) % region.length);
-                drawImg(region[Math.round((Time.now - Time.launchTime) * levelKey.speed) % region.length], (x * 19) - Camera.x, (y * 19) - Camera.y);
-            }else{
-                drawImg(region, (x * 19) - Camera.x, (y * 19) - Camera.y);
+            if(level.background !== undefined){
+                let backgroundKey = level.key[level.background[y][x]];
+                drawTileRegion(x * 19, y * 19, backgroundKey);
             }
+            let levelKey = level.key[level.layout[y][x]];
+            drawTileRegion(x * 19, y * 19, levelKey);
         }
     }
 }
@@ -121,6 +187,13 @@ const ParticlePresets = {
         for(let i = 0; i < sparks; i++){
             particleList.push(new BasicParticle(x, y, (Math.random() - 0.5) * width , Math.random() * height, 100));
         }
+    },
+
+    directedSpark(x, y, angle, spread, speed, sparkCount = 10, lifetime = 1000, sprite = ParticleAtlas.effects.green){
+        for(let i = 0; i < sparkCount; i++ ){
+            particleList.push(new BasicParticle(x, y, Math.cos(((Math.random() - 0.5) * spread + angle) * deg2rad) * speed, Math.sin(((Math.random() - 0.5) * spread + angle) * deg2rad) * speed, lifetime + ((Math.random() - 0.5) * lifetime * 0.25), sprite));
+        }
+
     }
 }
 
@@ -130,6 +203,7 @@ const BasicAreaChecks = {
     },
 
     inBox(centerX, centerY, testX, testY, halfWidth = 9.5, halfHeight = 9.5){
+        ctx.fillStyle = "#ffffff88";
         ctx.fillRect(centerX - Camera.x, centerY - halfHeight - Camera.y, halfWidth * 2, halfHeight * 2);
         if( testX <= centerX + halfWidth && testX >= centerX - halfWidth){
             if( testY <= centerY + halfHeight && testY >= centerY - halfHeight){
@@ -137,7 +211,39 @@ const BasicAreaChecks = {
             }
         }
         return false;
+    },
+    
+    inRect(x, y, w, h, testX, testY){
+        if(devToolsEnabled){
+            ctx.fillStyle = "#66339988";
+            ctx.fillRect(x - Camera.x, y - Camera.y, w, h);
+            ctx.fillRect(testX - 2 - Camera.x, testY - 2 - Camera.y, 4, 4);
+        }
+        if(testX <= x + w && testX >= x){
+            if(testY <= y + h && testY >= y){
+                return true;
+            }
+        }
+        return false;
     }
+}
+
+function getArrayToObjPath(object, path){ // from <object> goes down the path <path> sugests
+    // <path> example: if <object> looks like {foo: [ a, b, {apple: 4, bar: 42}]} ["foo", 2, "bar"] means <object>.foo[2].bar which returns 42
+    let localObjectRef = object;
+    for(let i = 0; i < path.length; i++){
+        localObjectRef = localObjectRef[path[i]];
+    }
+    return localObjectRef;
+}
+
+function setArrayToObjPath(object, path, value){ // from <object> goes down the path <path> sugests
+    // <path> example: if <object> looks like {foo: [ a, b, {apple: 4, bar: 42}]} ["foo", 2, "bar"] means <object>.foo[2].bar which will be set to <value>
+    let localObjectRef = object;
+    for(let i = 0; i < path.length - 1; i++){
+        localObjectRef = localObjectRef[path[i]];
+    }
+    localObjectRef[path[path.length - 1]] = value;
 }
 
 const BezierCurveFunctions = {
@@ -151,3 +257,26 @@ const BezierCurveFunctions = {
         return this.QuadraticLerp( this.LinearLerp( a, b, t), this.LinearLerp( b, c, t), this.LinearLerp(c, d, t), t );
     }
 };
+
+const ExtraMath = {
+    clamp(val, min, max){
+        if(val < min){
+            return min;
+        }else if(val > max){
+            return max;
+        }
+        return val;
+    }
+}
+
+function findInObjectFromString(obj, string){ // sepperates a string by ':' and looks for it in an object
+    let directory = string.split(":");
+    let localLevel = obj;
+
+    for(let i = 0 ; i < directory.length; i++ ){
+        localLevel = localLevel[directory[i]];
+    }
+
+    //console.log(localLevel);
+    return localLevel;
+}

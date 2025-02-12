@@ -3,10 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D enviorment</title>
+    <title>Speedy Metroidvania Game</title>
 </head>
 <body>
-    <canvas width="190" height="190" id="mainCanvas" style="image-rendering: pixelated; image-rendering: crisp-edges; width: 75vh; background-color: /*aquamarine*/ #c1accb;"></canvas>
+    <style>
+        body {
+            background-color: #1d0435;
+            margin: 0px;
+            color: aliceblue;
+        }
+
+        .powerUpCard{
+            content: "";
+            width: min(75vh, 75vw);
+            height: min(75vh, 75vw);
+
+            background-color: #1d0435cb;
+
+            display: flex;
+            justify-content: space-around;
+
+            flex-direction: column;
+        }
+    </style>
+    
+    <div style="width: 100%; display: flex; justify-content: center;" id="gameStuffHolder">
+        <canvas width="190" height="190" id="mainCanvas" style="image-rendering: pixelated; image-rendering: crisp-edges; width: 100vh; background-color: /*aquamarine*/ #c1accb;"></canvas>
+    </div>
+    <h1>Metroidvania Game</h1>
+    <h2>Speedy Platformer Game</h2>
+    <h3>Controls</h3>
+    <ul id="controlsList">
+        <li hidden id="jumpControl" >[W] - Jump</li>
+        <li>[A / D] - Left/Right</li>
+    </ul>
+    
     <script src="math2.js"></script>
     <script src="classes.js"></script>
     <script src="data.js"></script>

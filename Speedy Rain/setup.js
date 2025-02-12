@@ -24,9 +24,12 @@ const rad2deg = 180 / Math.PI;
         mouse[e.button] = false;
     });
 
+    
+
     let keys = {};
     let keysPressTime = {};
     let keysReleaseTime = {};
+    let gamePads = navigator.getGamepads();
 
     let mouse = {
         0: false,
@@ -66,6 +69,18 @@ const rad2deg = 180 / Math.PI;
     document.addEventListener('keydown', function(e){
         keys[e.code] = true;
         keysPressTime[e.code] = Time.now;
+
+        if(devToolsEnabled){
+            if(e.code === "KeyC"){
+                console.log("tried to copy");
+                if(key("ShiftLeft")){
+                    let rounded = {x : Math.floor((mouse.x + Camera.real.x) / 19) * 19, y : Math.floor((mouse.y + Camera.real.y) / 19) * 19};
+                    navigator.clipboard.writeText(`${rounded.x}, ${rounded.y}`);
+                }else{
+                    navigator.clipboard.writeText(`${mouse.x + Camera.x}, ${mouse.y + Camera.y}`);
+                }
+            }
+        }
     });
 
     document.addEventListener('keyup', function(e){
@@ -126,7 +141,7 @@ const rad2deg = 180 / Math.PI;
         lastTime = now;
 
         if(Time.deltaTime < 100){
-            gameUpdate();
+            MasterUpdate();
             Time.frameCount++;
         }else{
             console.log("You've Left!");

@@ -63,6 +63,13 @@ class Player {
         },
 
         this.physObject = true;
+        this.tags = {
+            "player" : true
+        };
+
+        this.movementInputEnabled = true;
+
+        this.dragState = "in air";
     }
 
     get hitbox() { // semi-hardcoded hitbox thing
@@ -120,34 +127,86 @@ class Player {
 
     tick(){
 
+        //this.dragState = "in air";
+
         //let vertical = ( -btn(this.controlScheme, "up") + btn(this.controlScheme, "down")) * this.horizontalSpeed * Time.deltaTime;
 
         this.motion.y += Time.deltaTime * 0.005;
+        if(btn(this.controlScheme, "down") === 1 && this.movementInputEnabled){
+            this.motion.y += Time.deltaTime * 0.0075;
+        }
         this.real.y += this.motion.y * Time.deltaTime * 0.2;
         if(this.hitbox){ // if on ground...
             while(this.hitbox){ // while on ground...
                 this.real.y -= Math.abs(this.motion.y) / this.motion.y; // get out of the ground in the oppesite direction you went in
             }
-            if((Math.abs(this.motion.y) / this.motion.y) === 1){
+            if((Math.abs(this.motion.y) / this.motion.y) === 1){ // if motion was directed down...
                 this.extraData.canCoyoteTime = true;
+                this.dragState = "on ground";
             }
-            this.motion.y = 0;
+            if(btn(this.controlScheme, "down") === 1 && Math.abs(this.motion.y) > 1 && this.movementInputEnabled){ // if down button pressed and there is any amount of vertical motion...
+                //console.log("bounce!");
+                for(let i = 0; i < 10; i++){
+                    particleList.push(new BasicParticle(this.x + 9.5, this.y + 16, (Math.random() - 0.5) * 6, Math.random() * 10, 500 + (Math.random() * 500), ParticleAtlas.effects.blue));
+                }
+                this.dragState = "in air";
+                this.motion.y *= -0.9;
+            }else if (btn(this.controlScheme, "down") === 1 && Math.abs(this.motion.y) <= 1 && this.movementInputEnabled){ // if down button pressed and there is not much vertical motion...
+                this.motion.y = 0;
+                this.dragState = "sliding";
+            }else{
+                this.motion.y = 0;
+                this.dragState = "on ground";
+            }
+            
             this.extraData.lastOnGroundTime = Time.now;
+            this.extraData.wasOnGroundLastFrame = true;
+        }else{ // if not on ground...
+            this.extraData.wasOnGroundLastFrame = false;
+            if(this.extraData.lastOnGroundTime + 50 < Time.now){
+                this.dragState = "in air";
+            }
+            
         }
 
-        
-
         // checks if 1) has pressed the jump button recently, 2) making sure you haven't already jumped, 3) tests if you were on the ground in the last 150 milisecs.
-        if(btnPressedWithin(this.controlScheme, "up", 150) === 1 && this.extraData.canCoyoteTime && this.extraData.lastOnGroundTime + 150 > Time.now){
+        if(btnPressedWithin(this.controlScheme, "up", 150) === 1 && this.extraData.canCoyoteTime && this.extraData.lastOnGroundTime + 150 > Time.now && this.movementInputEnabled){
             this.motion.y = -this.jumpPower;
             this.extraData.canCoyoteTime = false;
             this.extraData.hasJumped = true;
+
+            this.hitGroundParticle();
         }
 
-        let rawHorz = ( -btn(this.controlScheme, "left") + btn(this.controlScheme, "right"));
+
+        let rawHorz = ( -btn(this.controlScheme, "left") + btn(this.controlScheme, "right")) * (this.movementInputEnabled ? 1 : 0);
         let targetmotion = {x : 0, y : 0};
         targetmotion.x = rawHorz * this.horizontalSpeed * Time.deltaTime;
-        this.motion.x += (targetmotion.x - this.motion.x) * 0.4 * Time.deltaTime * ( Math.abs(rawHorz) > 0.2 ? ( this.gainingSpeed ) : (this.slowingSpeed));
+
+        let dragVal;
+        if(this.dragState === "on ground" && Math.abs(rawHorz) > 0.2){ // if on ground and moving...
+            dragVal = this.gainingSpeed;
+            if(Math.random() * 5 > 4){ // 1/5 chance to spawn a running particle
+                this.runningParticle();
+            }
+        }else if (this.dragState === "on ground" && Math.abs(rawHorz) <= 0.2 ){ // if on ground and NOT moving...
+            rawHorz = 0;
+            dragVal = this.slowingSpeed;
+        }else if (this.dragState === "in air" && Math.abs(rawHorz) > 0.2){ // if in air and moving...
+            dragVal = this.gainingSpeed;
+        }
+        else if (this.dragState === "in air" && Math.abs(rawHorz) <= 0.2){ // if in air and NOT moving...
+            dragVal = 0.0095; // maybe change to 0.0085
+            rawHorz = 0;
+        }
+        /*else if (this.dragState === "sliding"){
+            dragVal = 0.001;
+            this.motion.x += this.motion.y * Time.deltaTime * 0.001 * -10 * rawHorz;
+        }*/else{ // if all else fails, scream...
+            dragVal = this.slowingSpeed;
+        }
+        if(devToolsEnabled) {ctx.fillText(this.dragState, this.x - Camera.x, this.y - Camera.y);}
+        this.motion.x += (targetmotion.x - this.motion.x) * 0.4 * Time.deltaTime * dragVal;
 
         if(rawHorz > 0.2){
             this.extraData.flipped = true;
@@ -185,8 +244,12 @@ class Player {
 
     hitGroundParticle() {
         for(let i = 0; i < 10; i++){
-            particleList.push(new BasicParticle(this.x + 9.5, this.y + 9.5, (Math.random() - 0.5) * 0.2 , Math.random() * 3, 100));
+            particleList.push(new BasicParticle(this.x + 9.5, this.y + 9.5, (Math.random() - 0.5) * 2 , Math.random() * 3, 1000, ParticleAtlas.effects.green));
         }
+    }
+
+    runningParticle(){
+        particleList.push(new BasicParticle(this.x + 9.5, this.y + 15, ((Math.random()) * 3 + 5) * (this.extraData.flipped ? -1 : 1 ) , Math.random() * 3, 500 + (Math.random() * 250), ParticleAtlas.effects.green));
     }
 }
 
@@ -355,7 +418,7 @@ class DustParticle {
 }
 
 class ImpulseVolume { // sets velocity to a set value
-    constructor(centerX, centerY, motionX = 0, motionY = 0, checkAreaFunction = (gameObjectToTest) => {return (Math2.distance(gameObjectToTest, new vec2(centerX, centerY)) < 19 ); }){
+    constructor(centerX, centerY, motionX = 0, motionY = 0, checkAreaFunction = (gameObjectToTest) => {return (Math2.distance(gameObjectToTest, new vec2(centerX, centerY)) < 19 ); }, playerCanMoveInVolume = true){
         this.x = centerX;
         this.y = centerY;
 
@@ -365,10 +428,13 @@ class ImpulseVolume { // sets velocity to a set value
             x : motionX,
             y : motionY
         };
+
+        this.playerCanMoveInVolume = playerCanMoveInVolume; // true: player can influence movement while in volume, false: player has no movement input control.
     }
 
     draw(){
-        ctx.fillRect(this.x - 4 - Camera.x, this.y - 4 - Camera.y, 8, 8);
+        ctx.fillStyle = "#00000022";
+        //ctx.fillRect(this.x - 4 - Camera.x, this.y - 4 - Camera.y, 8, 8);
     }
 
     tick(){
@@ -385,12 +451,12 @@ class ImpulseVolume { // sets velocity to a set value
                 }
             }
         }
-        this.draw();
+        //this.draw();
     }
 }
 
 class AccelerationVolume { // adds momentum to an object
-    constructor(centerX, centerY, motionX = 0, motionY = 0, checkAreaFunction = (gameObjectToTest) => {return (Math2.distance(gameObjectToTest, new vec2(centerX, centerY)) < 19 ); }){
+    constructor(centerX, centerY, motionX = 0, motionY = 0, checkAreaFunction = (gameObjectToTest) => {return (Math2.distance(gameObjectToTest, new vec2(centerX, centerY)) < 19 ); }, playerCanMoveInVolume = true){
         this.x = centerX;
         this.y = centerY;
 
@@ -400,29 +466,66 @@ class AccelerationVolume { // adds momentum to an object
             x : motionX,
             y : motionY
         };
+
+        this.playerCanMoveInVolume = playerCanMoveInVolume; // true: player can influence movement while in volume, false: player has no movement input control.
     }
 
     draw(){
+        ctx.fillStyle = "#ffffff22";
         ctx.fillRect(this.x - 4 - Camera.x, this.y - 4 - Camera.y, 8, 8);
     }
 
     tick(){
-        this.checkAllOfArray(Players);
-        this.checkAllOfArray(particleList);
+        this.checkAllOfArray(Players, 9.5, 9.5);
+        //this.checkAllOfArray(particleList);
         this.draw();
     }
 
-    checkAllOfArray(array){
+    checkAllOfArray(array, offsetX = 0, offsetY = 0){
         for(let i = 0; i < array.length; i++){
             let element = array[i];
             if(element.physObject !== undefined){
-                if(this.checkAreaFunction(element)){
+                if(this.checkAreaFunction(new vec2(element.x + offsetX, element.y + offsetY))){
                     if(this.motion.x !== 0){
                         element.motion.x += this.motion.x * Time.deltaTime;
                     }
                     if(this.motion.y !== 0){
                         element.motion.y += this.motion.y * Time.deltaTime;
                     }
+                }
+            }
+        }
+    }
+}
+
+class PlayerModifier {
+    constructor( x, y, pathArrayToChange, value, checkAreaFunction = (gameObjectToTest) => { return BasicAreaChecks.inRect(x, y, 19, 19, gameObjectToTest.x, gameObjectToTest.y);} ){
+        this.x = x;
+        this.y = y;
+
+        this.path = pathArrayToChange;
+
+        this.value = value;
+
+        this.checkAreaFunction = checkAreaFunction;
+
+    }
+
+    tick(){
+        this.checkAllOfArray(Players, 9.5, 9.5);
+    }
+
+    checkAllOfArray(array, offsetX = 0, offsetY = 0){
+        for(let i = 0; i < array.length; i++){
+            let element = array[i];
+            if(element.physObject !== undefined){
+                if(this.checkAreaFunction(new vec2(element.x + offsetX, element.y + offsetY))){
+                    let localObjectRef = element;
+                    for(let i = 0; i < this.path.length - 1; i++){
+                        localObjectRef = localObjectRef[this.path[i]];
+                    }
+                    localObjectRef[this.path[this.path.length - 1]] = this.value;
+                    console.log(this.value);
                 }
             }
         }
@@ -508,7 +611,7 @@ class HangingWireEntity{
 
         this.droop = droop;
         this.swaySpeed = swaySpeed;
-        this.seed = (Math.random() - 0.5) * 180;
+        this.seed = (Math.random() - 0.5) * 15;
         this.segments = segments;
 
         this.color = color;
@@ -577,6 +680,151 @@ class HangingWireEntity{
         ctx.strokeStyle = savedStrokeStuff.color;
         ctx.lineWidth = savedStrokeStuff.lineWidth;
     }
+}
 
-    
+class LevelTransitionTrigger {
+    constructor( x, y, w, h, playerX, playerY, level, cutscene = undefined ){
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+
+        this.playerX = playerX;
+        this.playerY = playerY;
+        this.stringLevel = level;
+        this.targetLevel;
+
+        this.cutscene = cutscene;
+    }
+
+    start(){
+        this.targetLevel = findInObjectFromString(AreaAtlas, this.stringLevel);
+    }
+
+    tick(){
+        if(BasicAreaChecks.inRect(this.x, this.y, this.w, this.h, Players[0].real.x + 9.5, Players[0].real.y + 9.5)){
+            Players[0].real.x = this.playerX;
+            Players[0].real.y = this.playerY;
+            changeArea(this.targetLevel);
+            if(this.cutscene !== undefined){
+                this.cutscene();
+            }
+        }
+        if(devToolsEnabled){
+            ctx.fillRect(this.x - Camera.x, this.y - Camera.y, this.w, this.h);
+        }
+    }
+}
+
+class ItemPickup {
+    constructor(x, y, region, OnCollected = () => {console.log("collected!")}, AreaCheck = (thing2check) => {return BasicAreaChecks.inCircle(x, y, 19, thing2check.x, thing2check.y)}){
+        this.x = x;
+        this.y = y;
+        this.region = region;
+
+        this.OnCollected = OnCollected;
+        this.areaCheck = AreaCheck;
+
+        this.collected = false;
+
+        this.enabled = true;
+    }
+
+    tick(){
+        if(this.enabled){
+            drawTileRegion(this.x,this.y,this.region);
+            if(this.areaCheck(Players[0], this)){
+                this.collected = true;
+                this.enabled = false;
+
+                this.OnCollected();
+            }
+        }
+    }
+}
+
+class basic9Slice {
+    constructor(topCornerX, topCornerY, solid = false, tileWidth = 19, tileHeight = 19, innerSectionX = -1, innerSectionY = -1){
+        this.x = topCornerX;
+        this.y = topCornerY;
+
+        this.tileWidth = tileWidth;
+        this.tileHeight = tileHeight;
+
+        this.topLeft = {
+            "region" : new Region( topCornerX + (0 * tileWidth), topCornerY + (0 * tileHeight), tileWidth, tileHeight),
+            "solid" : solid
+        };
+        this.top = {
+            "region" : new Region( topCornerX + (1 * tileWidth), topCornerY + (0 * tileHeight), tileWidth, tileHeight),
+            "solid" : solid
+        };
+        this.topRight = {
+            "region" : new Region( topCornerX + (2 * tileWidth), topCornerY + (0 * tileHeight), tileWidth, tileHeight),
+            "solid" : solid
+        };
+
+        this.left = {
+            "region" : new Region( topCornerX + (0 * tileWidth), topCornerY + (1 * tileHeight), tileWidth, tileHeight),
+            "solid" : solid
+        };
+        this.center = {
+            "region" : new Region( topCornerX + (1 * tileWidth), topCornerY + (1 * tileHeight), tileWidth, tileHeight),
+            "solid" : solid
+        };
+        this.right = {
+            "region" : new Region( topCornerX + (2 * tileWidth), topCornerY + (1 * tileHeight), tileWidth, tileHeight),
+            "solid" : solid
+        };
+
+        this.bottomLeft = {
+            "region" : new Region( topCornerX + (0 * tileWidth), topCornerY + (2 * tileHeight), tileWidth, tileHeight),
+            "solid" : solid
+        };
+        this.bottom = {
+            "region" : new Region( topCornerX + (1 * tileWidth), topCornerY + (2 * tileHeight), tileWidth, tileHeight),
+            "solid" : solid
+        };
+        this.bottomRight = {
+            "region" : new Region( topCornerX + (2 * tileWidth), topCornerY + (2 * tileHeight), tileWidth, tileHeight),
+            "solid" : solid
+        };
+
+        if(innerSectionX !== -1){
+            this.innerTopLeft = {
+                "region" : new Region( innerSectionX + (0 * tileWidth), innerSectionY + (0 * tileHeight), tileWidth, tileHeight),
+                "solid" : solid
+            },
+            this.innerTopRight = {
+                "region" : new Region( innerSectionX + (1 * tileWidth), innerSectionY + (0 * tileHeight), tileWidth, tileHeight),
+                "solid" : solid
+            },
+            this.innerBottomLeft = {
+                "region" : new Region( innerSectionX + (0 * tileWidth), innerSectionY + (1 * tileHeight), tileWidth, tileHeight),
+                "solid" : solid
+            },
+            this.innerBottomRight = {
+                "region" : new Region( innerSectionX + (1 * tileWidth), innerSectionY + (1 * tileHeight), tileWidth, tileHeight),
+                "solid" : solid
+            }
+        }
+    }
+}
+
+class DrawShape {
+    constructor(drawFunc = () => { ctx.fillRect(0, 0, 19, 19); }){
+        this.draw = drawFunc;
+    }
+
+    moveInWorldTo(x, y){
+        ctx.moveTo(x - Camera.x, y - Camera.y);
+    }
+
+    lineInWorldTo(x, y){
+        ctx.lineTo(x - Camera.x, y - Camera.y);
+    }
+
+    tick(){
+        this.draw();
+    }
 }
