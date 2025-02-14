@@ -75,7 +75,7 @@ const SpriteAtlas = {
     }
 }
 
-const TileAtlas = {
+let TileAtlas = {
     "air" : {"region" : new Region(0, 0, 0, 0), "solid" : false},
     "hardAir" : {"region" : new Region(0, 0, 0, 0), "solid" : true},
 
@@ -181,6 +181,29 @@ const TileAtlas = {
         "overgrownCircuitBoardMiddle" : {
             "region" : new Region(152, 95, 19, 19),
             "solid" : true
+        },
+
+        "grating" : {
+            "region" : new Region(152, 171, 19, 19),
+            "solid" : true
+        },
+
+        "labDesks" : {
+            "empty" : {
+                "region" : new Region( 95, 190 ),
+                "solid" : false
+            },
+            "computer1" : {
+                "region" : new Region( 114, 187, 19, 22, 0, -3 ),
+                "solid" : false
+            },
+            "computer2" : {
+                "region" : new Region( 133, 183, 19, 26, 0, -7 ),
+                "solid" : false
+            },
+            "keyboard" : {
+                "region" : new Region( 152, 190 ),
+            }
         }
     },
 
@@ -226,7 +249,8 @@ const ParticleAtlas = {
     },
 
     "effects" : {
-        "green" : new Region(129, 17, 2, 2, -1, -1)
+        "green" : new Region(129, 17, 2, 2, -1, -1),
+        "purple" : new Region(127, 17, 2, 2, -1, -1)
     }
 }
 
@@ -282,6 +306,12 @@ const keySets = {
         "t" : TileAtlas.lab.purpleOvergrownthEdge.innerTopRight,
         "f" : TileAtlas.lab.purpleOvergrownthEdge.innerBottomLeft,
         "g" : TileAtlas.lab.purpleOvergrownthEdge.innerBottomRight,
+
+        "o" : TileAtlas.lab.labDesks.empty,
+        "p" : TileAtlas.lab.labDesks.computer1,
+        "[" : TileAtlas.lab.labDesks.computer2,
+        "]" : TileAtlas.lab.labDesks.keyboard,
+        "+" : TileAtlas.lab.grating
     }
 }
 
@@ -548,7 +578,7 @@ const AreaAtlas = {
             ],
 
             "entities" : [
-                new LevelTransitionTrigger(333, 380, 19, 19 * 2, 19, 95, "LabArea:1afterWakeUp" ),
+                new LevelTransitionTrigger(333, 380, 19, 19 * 2, 19, 95, "LabArea/1afterWakeUp" ),
             ],
 
             "backdrop" : { "image" : "backgrounds/PurpleBackground.png", "width" : 190, "height" : 190 }
@@ -587,7 +617,7 @@ const AreaAtlas = {
                 "              ",
                 "              ",
                 "              ",
-                "  uuuui       ",
+                "  uuuui  opo] ",
                 "qwwwejjj      ",
                 "zxxxcjjj      ",
                 "     rm,  nt  ",
@@ -612,9 +642,11 @@ const AreaAtlas = {
             ],*/
 
             "entities" : [
-                new LevelTransitionTrigger(-9, 76, 19, 19 * 2, 323, 399, "LabArea:WakeUp01" ),
-                new LevelTransitionTrigger(247 + 8, 152, 19, 19 * 2, 19, 76, "LabArea:ToJumpGet" ),
-                new LevelTransitionTrigger(247, 38, 19, 19 * 2, 19, 76, "LabArea:JumpGet" )
+                new LevelTransitionTrigger(-9, 76, 19, 19 * 2, 323, 399, "LabArea/WakeUp01" ),
+                new LevelTransitionTrigger(247 + 8, 152, 19, 19 * 2, 19, 76, "LabArea/ToJumpGet" ),
+                new LevelTransitionTrigger(247, 38, 19, 19 * 2, 19, 133, "LabArea/WallKickIntro/introRoom" ),
+
+                new SuspendedWireEntity(152, 95, 19, 19)
             ]
         },
 
@@ -664,8 +696,8 @@ const AreaAtlas = {
                 "0000000000000000",
             ],
             "entities": [
-                new LevelTransitionTrigger(-9, 57, 19, 19 * 2, 228, 171, "LabArea:1afterWakeUp" ),
-                new LevelTransitionTrigger(285, 190, 19, 19 * 2, 19, 190, "LabArea:JumpGet" ),
+                new LevelTransitionTrigger(-9, 57, 19, 19 * 2, 228, 171, "LabArea/1afterWakeUp" ),
+                new LevelTransitionTrigger(285, 190, 19, 19 * 2, 19, 190, "LabArea/JumpGet" ),
             ]
         },
 
@@ -724,19 +756,19 @@ const AreaAtlas = {
                 "222223qwwwek              7",
                 "000!65a   dfi              ",
                 "0004jja   djfi             ",
-                "0004jjzxxxcjjk      1222222",
+                "0004jjzxxxcjjk op[o 1222222",
                 "000&2222222222222222%000000",
                 "000000000000000000000000000"
             ],
 
             "entities" : [
-                new LevelTransitionTrigger(0, 152, 19, 19 * 3, 228, 171, "LabArea:1afterWakeUp" ),
-                new LevelTransitionTrigger(494, 228, 19, 19 * 2, 19, 171, "LabArea:JumpGetP2" ),
-                new LevelTransitionTrigger(494, 95, 19, 19 * 2, 19, 57, "LabArea:JumpGetP2" ),
+                new LevelTransitionTrigger(0, 152, 19, 19 * 3, 228, 171, "LabArea/1afterWakeUp" ),
+                new LevelTransitionTrigger(494, 228, 19, 19 * 2, 19, 171, "LabArea/JumpGetP2" ),
+                new LevelTransitionTrigger(494, 95, 19, 19 * 2, 19, 57, "LabArea/JumpGetP2" ),
 
-                new LevelTransitionTrigger(0, 57, 19, 19 * 2, 228, 57, "LabArea:1afterWakeUp" ),
+                new LevelTransitionTrigger(0, 57, 19, 19 * 2, 323, 171, "LabArea/WallKickIntro/introRoom" ),
                 
-                new ItemPickup(152, 266 - 9, TileAtlas.pickups.powerup, () => {Players[0].jumpPower = 1.5; CutSceneAtlas.currentScene = CutSceneAtlas.jumpPickup; /*alert("Try \"W\" To Jump!!!!")*/}, (thing2test, me) => { return BasicAreaChecks.inCircle(me.x, me.y, 19*1.5, thing2test.x, thing2test.y); } ),
+                new ItemPickup(152, 266 - 9, TileAtlas.pickups.powerup, () => {Players[0].wallKicksAllowed = 2; CutSceneAtlas.currentScene = CutSceneAtlas.kickPickup; /*alert("Try \"W\" To Jump!!!!")*/}, (thing2test, me) => { return BasicAreaChecks.inCircle(me.x, me.y, 19*1.5, thing2test.x, thing2test.y); } ),
             ],
 
             /*"backdropEntities" : [
@@ -783,12 +815,72 @@ const AreaAtlas = {
                 "000000000000000"
             ],
             "entities" : [
-                new LevelTransitionTrigger(0, 38, 19, 19 * 2, 475, 114, "LabArea:JumpGet" ),
+                new LevelTransitionTrigger(0, 38, 19, 19 * 2, 475, 114, "LabArea/JumpGet" ),
 
-                new LevelTransitionTrigger(0, 114, 19, 19 * 4, 475, 247, "LabArea:JumpGet" ),
+                new LevelTransitionTrigger(0, 114, 19, 19 * 4, 475, 247, "LabArea/JumpGet" ),
                 new ItemPickup(152, 266 - 9, TileAtlas.pickups.powerup, () => { Players[0].jumpPower = 1.5; CutSceneAtlas.currentScene = CutSceneAtlas.jumpPickup}, (thing2test, me) => { return BasicAreaChecks.inCircle(me.x, me.y, 19*1.5, thing2test.x, thing2test.y); } )
             ]
         },
+
+        "WallKickIntro" : {
+            "introRoom" : {
+                "key" : keySets.OvergrownLabSet,
+
+                "apple" : [
+                    "123", "!#",
+                    "8_4", "&%",
+                    "765"
+                ],
+
+                "layout" : [
+                    "0000000000000000000",
+                    "0000000000!66666#00",
+                    "00000000!65     766",
+                    "00000!665          ",
+                    "!66#!5             ",
+                    "5  75         12222",
+                    "   +    123   7666#",
+                    "   +   1%04       7",
+                    "23 + 12%00&3       ",
+                    "0&222%00000&3      ",
+                    "000000000000&222222",
+                    "0000000000000000000",
+                    "0000000000000000000",
+                ],
+
+                "background" : [
+                    "___________________",
+                    "___________________",
+                    "___________,  nm___",
+                    "_________          ",
+                    "______k       yi   ",
+                    "_____gfui    y_j___",
+                    "___ygjrm,__ ygj____",
+                    "___hrm,____ hr,   _",
+                    "___hf______ gk     ",
+                    "____________j, yui ",
+                    "___________________",
+                    "___________________",
+                    "___________________",
+                ],
+
+                "backdrop" : { "color" : "#fff", "width" : "100%", "height" : "100%" },
+
+                "entities" : [
+                    new LevelTransitionTrigger(342, 152, 19, 19 * 2, 19, 76, "LabArea/JumpGet" ),
+
+                    new LevelTransitionTrigger(0, 114, 19, 19 * 2, 228, 57, "LabArea/1afterWakeUp" ),
+
+                    //new LevelTransitionTrigger(342, 57, 19, 19 * 2, )
+
+                    new SuspendedWireEntity(171, 57, 266, 114, 19 * 0.5, 0.3, "#5f1585"),
+                    new HangingWireEntity(304, 133, 19 * 2, 0.4, "#5f1585"),
+                    new HangingWireEntity(304 + 5, 133, 19 * 2.5, 0.4, "#5f1585"),
+
+                    new PlayerSwitch(114, 152, 10, true, () => { console.log("apple"); setTile(3, 6, " "); setTile(3, 7, " "), setTile(3, 8, " ") })
+                ]
+            }
+        }
     }
 }
 
@@ -803,12 +895,12 @@ const GUIAtlas = {
     },
 
     Presets : {
-        JumpPowerupCard(){
-            let card = GUIAtlas.CreatePowerupCardWithContent("JumpPowerupCard", `
+        KickPowerUpCard(){
+            let card = GUIAtlas.CreatePowerupCardWithContent("KickPowerUpCard", `
                 <div>
-                    <h3 style="text-align: center">Jumping!</h3>
-                    <p style="text-align: center">Press [W] to jump!!!</p>
-                    <p style="text-align: center">([W] to exit)</p>
+                    <h3 style="text-align: center">Wall Kicking!!</h3>
+                    <p style="text-align: center">Press [K] while hugging a wall to kick off of it!!!</p>
+                    <p style="text-align: center">([K] to exit)</p>
                 </div>
             `);
 
@@ -850,21 +942,21 @@ const CutSceneAtlas = {
         }
     },
 
-    jumpPickup() {
-        let jumpCard;
+    kickPickup() {
+        let kickCard;
         if( this.timeOfStart === -1 ){
             this.timeOfStart = Time.now;
             Players[0].movementInputEnabled = false;
-            console.log("Jump Pickup Cutscene");
-            document.getElementById("jumpControl").removeAttribute("hidden");
-            jumpCard = GUIAtlas.Presets.JumpPowerupCard();
+            console.log("Kick Pickup Cutscene");
+            document.getElementById("kickControl").removeAttribute("hidden");
+            kickCard = GUIAtlas.Presets.KickPowerUpCard();
         }
     
-        if( keyPressedWithin("KeyW", 1000) ){
+        if( keyPressedWithin("KeyK", 1000) ){
             Players[0].movementInputEnabled = true;
             this.currentScene = undefined;
             this.timeOfStart = -1;
-            document.getElementById("JumpPowerupCard").remove();
+            document.getElementById("KickPowerUpCard").remove();
         }
     }
 }
