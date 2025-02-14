@@ -1,6 +1,10 @@
 function start(){
     engineUpdate();
 
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    //ctx.globalCompositeOperation = "lighter";
+
     changeArea(AreaAtlas.LabArea.WakeUp01);
     CutSceneAtlas.currentScene = CutSceneAtlas.IntroCutScene;
 }
@@ -18,7 +22,7 @@ function drawImg( region, x, y, w = -1, h = -1 ){
 }
 
 let Players = [
-    new Player("player1", ControlSchemes.Player1, /*0.15*/ 0.2, 0 /* set to 1.5 in a Lab:JumpGet ItemPickup */, 0.025),
+    new Player("player1", ControlSchemes.Player1, /*0.15*/ 0.2, 1.5 /* set to 1.5 in a Lab:JumpGet ItemPickup */, 0.025),
     //new Player("player2", ControlSchemes.Player2, 0.15, 1.5)
 ];
 
@@ -40,16 +44,29 @@ function changeArea(level){
     particleList = []; // clears all particles
 
     if(currentLevel.backdrop !== undefined){
-        canvasElement.style.backgroundImage = `url('${ currentLevel.backdrop.image }')`;
-        canvasElement.style.backgroundSize = `${currentLevel.backdrop.width}px ${currentLevel.backdrop.height}px`;
+        if( currentLevel.backdrop.color !== undefined) { // if backdrop has a color key...
+            canvasElement.style.backgroundColor = currentLevel.backdrop.color;
+        }
+
+        if( currentLevel.backdrop.image !== undefined) { // if backdrop has an image key
+            canvasElement.style.backgroundImage = `url('${ currentLevel.backdrop.image }')`;
+            
+            if(typeof currentLevel.backdrop.width === "string"){
+                canvasElement.style.backgroundSize = `${currentLevel.backdrop.width} ${currentLevel.backdrop.height}`;
+            }else{
+                canvasElement.style.backgroundSize = `${currentLevel.backdrop.width}px ${currentLevel.backdrop.height}px`;
+            }
+        }
     }
 
-    for(let i = 0; i < level.entities.length; i++){
-        try{
-            currentLevel.entities[i]?.start();
-        }
-        catch(error) {
+    if(currentLevel.entities !== undefined){
+        for(let i = 0; i < level.entities.length; i++){
+            try{
+                currentLevel.entities[i]?.start();
+            }
+            catch(error) {
 
+            }
         }
     }
 }
@@ -86,8 +103,10 @@ function gameUpdate(){
         particleList.push(new BasicParticle(Players[0].x + 9.5, Players[0].y + 9.5, (Math.random() - 0.5) * 6, Math.random() * 3, 1000, ParticleAtlas.effects.green));
     }
 
-    for(let i = 0; i < currentLevel.entities.length; i++){
-        currentLevel.entities[i].tick();
+    if(currentLevel.entities !== undefined){
+        for(let i = 0; i < currentLevel.entities.length; i++){
+            currentLevel.entities[i].tick();
+        }
     }
 
     for(let i = 0; i < particleList.length; i++){ // TODO : Fix the particle deletion, perhaps look at the "missed beat" game
@@ -96,7 +115,7 @@ function gameUpdate(){
         if(particleList[i].age > particleList[i].lifetime){
             particleList.splice(i, 1);
         }
-        console.log(particleList[i]);
+        //console.log(particleList[i]);
     }
 
     //worldArrow(player2.x + 8, player2.y + 8, 95, 95, "#f0f", "#af2");
@@ -143,6 +162,16 @@ function drawLevel(useCamera = false, level = currentLevel){
             drawTileRegion(x * 19, y * 19, levelKey);
         }
     }
+}
+
+
+function setTile(x, y, replaceWithKey, level = currentLevel){
+    if(level.layout[y] === undefined || level.layout[y][x] === undefined){
+        console.log("NULL!!!!!!!!!!!!!!!!!!!!!!");
+        return;
+    }
+    
+    level.layout[y] = level.layout[y].slice(0, x) + replaceWithKey + level.layout[y].slice(x + 1);
 }
 
 function getTile(x, y, level = currentLevel){
@@ -199,6 +228,12 @@ const ParticlePresets = {
 
 const BasicAreaChecks = {
     inCircle(centerX, centerY, radius, testX, testY){
+
+        if(devToolsEnabled){
+            ctx.beginPath();
+            ctx.arc(centerX - Camera.x, centerY - Camera.y, radius, 0, 2 * Math.PI);
+            ctx.fill();
+        }
         return (Math2.distance(new vec2(testX, testY), new vec2(centerX, centerY)) <= radius );
     },
 
@@ -269,8 +304,8 @@ const ExtraMath = {
     }
 }
 
-function findInObjectFromString(obj, string){ // sepperates a string by ':' and looks for it in an object
-    let directory = string.split(":");
+function findInObjectFromString(obj, string){ // sepperates a string by '/' and looks for it in an object
+    let directory = string.split("/");
     let localLevel = obj;
 
     for(let i = 0 ; i < directory.length; i++ ){

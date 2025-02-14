@@ -70,6 +70,8 @@ class Player {
         this.movementInputEnabled = true;
 
         this.dragState = "in air";
+
+        this.wallKicksAllowed = 0; // set to 2 in Lab:JumpGet
     }
 
     get hitbox() { // semi-hardcoded hitbox thing
@@ -143,6 +145,7 @@ class Player {
             if((Math.abs(this.motion.y) / this.motion.y) === 1){ // if motion was directed down...
                 this.extraData.canCoyoteTime = true;
                 this.dragState = "on ground";
+                this.extraData.wallKicks = this.wallKicksAllowed; // 2 wall kicks allowed before recharge needed.
             }
             if(btn(this.controlScheme, "down") === 1 && Math.abs(this.motion.y) > 1 && this.movementInputEnabled){ // if down button pressed and there is any amount of vertical motion...
                 //console.log("bounce!");
@@ -219,7 +222,16 @@ class Player {
             while(this.hitbox){
                 this.real.x -= Math.abs(this.motion.x) / this.motion.x;
             }
-            this.motion.x = 0;
+
+            if(keyPressedWithin("KeyK", 50) && this.extraData.wallKicks > 0 && this.jumpPower > 0){
+                this.motion.x = -Math.abs(this.motion.x) / this.motion.x * Time.deltaTime * 0.5;
+                this.motion.y = -this.jumpPower;
+                this.extraData.wallKicks -= 1;
+                this.extraData.wallKickTime = 0;
+            }else{
+                this.motion.x = 0;
+            }
+            
             this.extraData.canWallJump = true;
             this.extraData.lastWallTouchTime = Time.now;
         }
@@ -244,12 +256,12 @@ class Player {
 
     hitGroundParticle() {
         for(let i = 0; i < 10; i++){
-            particleList.push(new BasicParticle(this.x + 9.5, this.y + 9.5, (Math.random() - 0.5) * 2 , Math.random() * 3, 1000, ParticleAtlas.effects.green));
+            particleList.push(new BasicParticle(this.x + 9.5, this.y + 9.5, (Math.random() - 0.5) * 2 , Math.random() * 3, 1000, ParticleAtlas.effects.purple));
         }
     }
 
     runningParticle(){
-        particleList.push(new BasicParticle(this.x + 9.5, this.y + 15, ((Math.random()) * 3 + 5) * (this.extraData.flipped ? -1 : 1 ) , Math.random() * 3, 500 + (Math.random() * 250), ParticleAtlas.effects.green));
+        particleList.push(new BasicParticle(this.x + 9.5, this.y + 15, ((Math.random()) * 3 + 5) * (this.extraData.flipped ? -1 : 1 ) , Math.random() * 3, 500 + (Math.random() * 250), ParticleAtlas.effects.purple));
     }
 }
 
@@ -826,5 +838,40 @@ class DrawShape {
 
     tick(){
         this.draw();
+    }
+}
+
+class PlayerSwitch {
+    constructor(x, y, activationRadius, triggerOnce = false, Ontrigger = () => {console.log("switch triggered!!!!")}){
+        this.x = x;
+        this.y = y;
+        this.activationRadius = activationRadius;
+
+        this.flags = {
+            "triggered" : false,
+            "triggerOnce" : triggerOnce,
+
+            "stillInRadius" : false,
+        }
+
+        this.OnTrigger = Ontrigger;
+    }
+
+    tick(){
+        if(BasicAreaChecks.inCircle(this.x, this.y, this.activationRadius, Players[0].real.x + 9.5, Players[0].real.y + 19) && !this.flags.triggered){
+            if(this.flags.triggerOnce){
+                this.flags.triggered = true;
+                this.OnTrigger();
+            }
+        }
+        this.draw();
+    }
+
+    draw(){
+        if(this.flags.triggered){
+            drawTileRegion(this.x, this.y-19, {"region" : new Region(171, 171, 19, 19, -9, 0)});
+        }else{
+            drawTileRegion(this.x, this.y-19, {"region" : new Region(190, 171, 19, 19, -9, 0)});
+        }
     }
 }
