@@ -870,6 +870,7 @@ const AreaAtlas = {
                     new LevelTransitionTrigger(342, 152, 19, 19 * 2, 19, 76, "LabArea/JumpGet" ),
 
                     new LevelTransitionTrigger(0, 114, 19, 19 * 2, 228, 57, "LabArea/1afterWakeUp" ),
+                    new LevelTransitionTrigger(342, 57, 19, 19 * 2, 19, 95, "LabArea/WallKickIntro/longFall"),
 
                     //new LevelTransitionTrigger(342, 57, 19, 19 * 2, )
 
@@ -879,8 +880,199 @@ const AreaAtlas = {
 
                     new PlayerSwitch(114, 152, 10, true, () => { console.log("apple"); setTile(3, 6, " "); setTile(3, 7, " "), setTile(3, 8, " ") })
                 ]
+            },
+
+            "longFall" : {
+                "key" : keySets.OvergrownLabSet,
+
+                "apple" : [
+                    "123", "!#",
+                    "8_4", "&%",
+                    "765"
+                ],
+
+                "layout": [
+                    "00000000000000",
+                    "00000!66#00000",
+                    "0!6665  766#00",
+                    "65         800",
+                    "           800",
+                    "    123    800",
+                    "2222%!5    800",
+                    "0000!5     800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                    "00004      800",
+                ],
+
+                "entities" : [
+                    new LevelTransitionTrigger(0, 76, 9.5, 19 * 2, 323, 76, "LabArea/WallKickIntro/introRoom"),
+                    new LevelTransitionTrigger(95, 437, 19*6, 19, 228 + 9, 0, "LabArea/WallKickIntro/longFallCatch")
+                ]
+            },
+
+            "longFallCatch" : {
+                "key" : keySets.OvergrownLabSet,
+
+                "apple" : [
+                    "123", "!#",
+                    "8_4", "&%",
+                    "765"
+                ],
+
+                "layout" : [
+                    "0000000004      80000",
+                    "0000000004      80000",
+                    "0000000004      80000",
+                    "00000000!5      80000",
+                    "000000004       7#000",
+                    "0000000!5        8000",
+                    "000000!5         76#0",
+                    "000!665            80",
+                    "0!65               80",
+                    "!5                 80",
+                    "4                  80",
+                    "4                  7#",
+                    "4                   8",
+                    "4        yuui       7",
+                    "4      yugjjk        ",
+                    "&3     nmtrm,        ",
+                    "0&223    hk     12222",
+                    "0000&22222222222%0000",
+                    
+                ],
+
+                "entities" : [
+                    new SuspendedWireEntity(171, 76, 323, 133, 19, 0.3, "#5f1585"),
+                    new SuspendedWireEntity(361, 133, 95, 152, 19, 0.35, "#5f1585"),
+                    new SuspendedWireEntity(361, 190, 190, 19, 19, 0.2, "#5f1585"),
+                    new SuspendedWireEntity(361, 171, 228, 266, 0 - 19 * 2, 0.25, "#5f1585"),
+                    new HangingWireEntity(152, 114, 19 * 5, 0.4, "#5f1585"),
+                    new HangingWireEntity(57, 171, 19 * 5.3, 0.45, "#5f1585"),
+
+                    //new LevelTransitionTrigger()
+                ]
+            },
+
+            "WallKickGet" : {
+                "key" : keySets.OvergrownLabSet,
+
+                "apple" : [
+                    "123", "!#",
+                    "8_4", "&%",
+                    "765"
+                ],
+
+                "layout" : [
+                    "04      80",
+                    "04      80",
+                    "04      76",
+                    "04        ",
+                    "04        ",
+                    "65      12",
+                    "        80",
+                    "        80",
+                    "22222222%0",
+                    "0000000000",
+                ],
+
+                "entities" : [
+                    new LevelTransitionTrigger(0, 114, 9.5, 19 * 2, 361, 285, "LabArea/WallKickIntro/longFallCatch"),
+                    new DrawShape(() => {
+                        function moveInWorldTo(x, y){
+                            ctx.moveTo(x - Camera.x, y - Camera.y);
+                        }
+                    
+                        function lineInWorldTo(x, y){
+                            ctx.lineTo(x - Camera.x, y - Camera.y);
+                        }
+                        ctx.beginPath();
+                        let lightGrad = ctx.createLinearGradient(0, 0, 0, 19 * 7);
+                        lightGrad.addColorStop(0, "#e1faf4ff");
+                        lightGrad.addColorStop(0.5, "#e1faf433");
+                        lightGrad.addColorStop(1, "#e1faf400");
+                        ctx.fillStyle = lightGrad;
+                        ctx.rect(38, 0, 19 * 6, 19 * 7);
+                        ctx.fill();
+                    })
+                ]
+            },
+
+            "WallKickTutorial" : {
+                "key" : keySets.OvergrownLabSet,
+
+                "apple" : [
+                    "123", "!#",
+                    "8_4", "&%",
+                    "765"
+                ],
+
+                "layout" : [
+                    "000!66666#000000",
+                    "00!5     76#0000",
+                    "004        80000",
+                    "004        80000",
+                    "004        80000",
+                    "00&223   12%0000",
+                    "66665    8!6#000",
+                    "         75 7#00",
+                    "             76#",
+                    "   123         8",
+                    "222665         8",
+                    "0!5     123    8",
+                    "04      765  12%",
+                    "04           800",
+                    "0&23         800",
+                    "00!5         800",
+                    "665    122222%00",
+                    "       800000000",
+                    "       800000000",
+                    "2222222%00000000",
+                    "0000000000000000"
+                ],
+
+                "background" : [
+                    "000!66666#000000",
+                    "00!5     76#0000",
+                    "004        80000",
+                    "004        80000",
+                    "004        80000",
+                    "00&223yuu12%0000",
+                    "66665fgjj8!6#000",
+                    "   hjjjrm75j7#00",
+                    "   hjjr, ygjj76#",
+                    "   123,  hjjjk 8",
+                    "222665   hjrm, 8",
+                    "0!5     123,   8",
+                    "04      765  12%",
+                    "04      hjfi 800",
+                    "0&23    hjjk 800",
+                    "00!5    hjjk 800",
+                    "665    122222%00",
+                    "00fi   800000000",
+                    "000k   800000000",
+                    "2222222%00000000",
+                    "0000000000000000"
+                ],
+
+                "entities" : [
+
+                ]
             }
-        }
+        },
     }
 }
 

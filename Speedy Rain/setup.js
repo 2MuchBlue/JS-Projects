@@ -16,7 +16,7 @@ const rad2deg = 180 / Math.PI;
         mouse.movementY = e.movementY;
     });
 
-    document.addEventListener('mousedown', function(e){
+    canvasElement.addEventListener('mousedown', function(e){
         mouse[e.button] = true;
     });
     

@@ -11,13 +11,42 @@
             background-color: #1d0435;
             margin: 0px;
             color: aliceblue;
+
+            box-sizing: border-box;
+        }
+
+        .editorHolder {
+            display: grid;
+            grid-template-areas: 
+            "main main mapSelect"
+            "main main tiles"
+            "entities entities tiles"
+            "data data tiles"
+            "links info info";
+
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 0fr 300px 200px 0fr 0fr;
+        }
+
+        .tile{
+            background-color: #ffffff;
+            width: 25%;
+            margin: 10px;
+        }
+
+        .tile:hover{
+            transform: scale(1.2);
+        }
+
+        canvas{
+            image-rendering: pixelated; image-rendering: crisp-edges;
         }
     </style>
 
     
-    <div style="width: 100%; display: flex; justify-content: center;" id="gameStuffHolder">
-        <canvas width="190" height="190" id="mainCanvas" style="image-rendering: pixelated; image-rendering: crisp-edges; width: 100vh; background-color: /*aquamarine*/ #c1accb;"></canvas>
-        <div id="levelSelect" style="display: flex; flex-direction: column; align-items: center; min-width: 100px;">
+    <div class="editorHolder" id="gameStuffHolder">
+        <canvas width="190" height="190" id="mainCanvas" style=" background-color: /*aquamarine*/ #c1accb; grid-area: main; height: 100%;"></canvas>
+        <div id="levelSelect" style="grid-area: mapSelect; display: flex; flex-direction: column; align-items: center; min-width: 100px;">
             <div>
                 <button onclick="new function() { hideMainLayer = !hideMainLayer }">hide main layer Toggle</button>
             </div>
@@ -27,9 +56,23 @@
             <button onclick="changeArea(AreaAtlas.LabArea.JumpGet)">JumpGet</button>
             <button onclick="changeArea(AreaAtlas.LabArea.JumpGetP2)">JumpGetP2</button>
             <button onclick="changeArea(AreaAtlas.LabArea.WallKickIntro.introRoom)">WallKickIntro : introRoom</button>
+            <button onclick="changeArea(AreaAtlas.LabArea.WallKickIntro.longFall)">WallKickIntro : longFall</button>
+            <button onclick="changeArea(AreaAtlas.LabArea.WallKickIntro.longFallCatch)">WallKickIntro : longFallCatch</button>
+            <button onclick="changeArea(AreaAtlas.LabArea.WallKickIntro.WallKickTutorial)">WallKickIntro : WallKickTutorial</button>
+            <button onclick="changeArea(AreaAtlas.LabArea.WallKickIntro.WallKickGet)">WallKickIntro : WallKickGet</button>
         </div>
+
+        <div style="grid-area: tiles; overflow-y: scroll;">
+            <button onclick="reloadTiles()">ReloadTiles</button>
+            <div id="tileHolder">
+                <button>apple</button>
+            </div>
+        </div>
+
+        <div style="grid-area: entities">entities</div>
+        
     </div>
-    
+    <pre id="dataHolder"></pre>
     <script src="math2.js"></script>
     <script src="classes.js"></script>
     <script src="data.js"></script>
@@ -38,6 +81,8 @@
     <script>
 
         let hideMainLayer = false;
+        let currentTileKey = " ";
+        let dataHolder = document.getElementById("dataHolder");
 
         /*let element = document.createElement("button");
         element.innerText = AreaAtlasKeys[i];
@@ -57,6 +102,35 @@
                     }
                 }
             }
+        }
+
+        function reloadTiles(){
+            let levelKeys = Object.keys(currentLevel.key);
+            let tileHolder = document.getElementById("tileHolder");
+            tileHolder.textContent = ''; // clears all child nodes
+            makeTileButton(tileHolder, " " );
+            for(let i = 0; i < levelKeys.length; i++ ){
+                makeTileButton(tileHolder, levelKeys[i]);
+            }
+        }
+
+        function makeTileButton(holder, key){
+            let localCanvasElement = document.createElement("canvas");
+            let localRegion = currentLevel.key[key];
+
+            if(Array.isArray(localRegion.region)){
+                localRegion.region = localRegion.region[0];
+            }
+
+            localCanvasElement.width = Math.max( localRegion.region.w, 4 );
+            localCanvasElement.height = Math.max( localRegion.region.h, 4 );
+            localCanvasElement.classList = "tile";
+
+            localCanvasElement.onclick = () => { currentTileKey = key; }
+
+            let localCTX = localCanvasElement.getContext('2d');
+            drawTileRegion(Camera.x, Camera.y, localRegion, localCTX);
+            holder.appendChild(localCanvasElement);
         }
 
         function isObject(x){
@@ -80,6 +154,7 @@
         function MasterUpdate(){
 
             ctx.clearRect(0,0,canvasElement.width, canvasElement.height);
+            
             Camera.real.x += ( -btn(ControlSchemes.Player1, "left") + btn(ControlSchemes.Player1, "right")) * Time.deltaTime * 0.1;
             Camera.real.y += ( -btn(ControlSchemes.Player1, "up") + key("KeyS")) * Time.deltaTime * 0.1;
             
@@ -92,7 +167,13 @@
                     currentLevel.backdropEntities[i].tick();
                 }
             }
-            
+
+            drawTileRegion(Math.floor((mouse.x + Camera.x) / 19) * 19, Math.floor((mouse.y + Camera.y) / 19) * 19, currentLevel.key[currentTileKey]);
+            if(mouse[0] === true){
+                setTile(Math.floor((mouse.x + Camera.x) / 19), Math.floor((mouse.y + Camera.y) / 19), currentTileKey);
+
+                dataHolder.innerText = JSON.stringify(currentLevel.layout, "", " ");
+            }
 
             drawLevel(true);
             //Players[1].tick();
@@ -118,8 +199,10 @@
 
             if(devToolsEnabled){
                 ctx.fillStyle = "#fff";
+                ctx.strokeStyle = "#fff";
+                let rounded = {x : Math.floor((mouse.x + Camera.real.x) / 19) * 19, y : Math.floor((mouse.y + Camera.real.y) / 19) * 19};
+                ctx.strokeRect(rounded.x - Camera.x, rounded.y - Camera.y - 1, 19, 19);
                 if(key("ShiftLeft")){
-                    let rounded = {x : Math.floor((mouse.x + Camera.real.x) / 19) * 19, y : Math.floor((mouse.y + Camera.real.y) / 19) * 19};
                     ctx.fillRect(rounded.x - Camera.x, rounded.y - Camera.y, 4, 4);
                     ctx.fillText(`${rounded.x}, ${rounded.y}`, rounded.x - Camera.real.x, rounded.y - Camera.real.y + 19);
                 }else{
@@ -131,7 +214,9 @@
             canvasElement.style.backgroundPosition = `${ Camera.real.x * -0.5 }px ${ Camera.real.y * -0.5 }px`;
             
             //BasicAreaChecks.inBox(19 * 14.5, 19 * 6.5, Players[0].x, Players[0].y, 3, 7)
-
+            ctx.fillText(Math.round(1000 / Time.deltaTime), 0, 190);
+            
+            
         }
     </script>
 </body>

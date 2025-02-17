@@ -9,7 +9,7 @@ function start(){
     CutSceneAtlas.currentScene = CutSceneAtlas.IntroCutScene;
 }
 
-function drawImg( region, x, y, w = -1, h = -1 ){
+function drawImg( region, x, y, w = -1, h = -1, context = ctx ){
     if(w = -1) {
         w = region.w;
     }
@@ -18,7 +18,7 @@ function drawImg( region, x, y, w = -1, h = -1 ){
         h = region.h;
     }
 
-    ctx.drawImage(Sheet, region.x, region.y, region.w, region.h, x + region.offsetX, y + region.offsetY, w, h);
+    context.drawImage(Sheet, region.x, region.y, region.w, region.h, x + region.offsetX, y + region.offsetY, w, h);
 }
 
 let Players = [
@@ -34,10 +34,20 @@ function MasterUpdate(){
     }else{
         gameUpdate();
     }
+
+    if(devToolsEnabled){ ctx.fillText(Math.round(1000 / Time.deltaTime), 0, 190); }
 }
 
-function changeArea(level){
+function changeArea(level, x = -1, y = -1){
     currentLevel = level;
+
+    if(x != -1){
+        Players[0].real.x = x;
+    }
+    if(y != -1){
+        Players[0].real.y = y;
+    }
+
     Camera.real.x = Players[0].real.x - canvasHalfWidth + 9;
     Camera.real.y = Players[0].real.y - canvasHalfWidth + 9;
 
@@ -142,12 +152,13 @@ function cutSceneUpdate(){
     gameUpdate();
 }
 
-function drawTileRegion(x, y, regionObj){
+function drawTileRegion(x, y, regionObj, context = ctx ){
     if(Array.isArray(regionObj.region)){
         //console.log(Math.round((Time.now - Time.launchTime) * 0.01) % region.length);
-        drawImg(regionObj.region[Math.round((Time.now - Time.launchTime) * regionObj.speed) % regionObj.region.length], (x) - Camera.x, (y) - Camera.y);
+        let reginThisFrame = regionObj.region[Math.round((Time.now - Time.launchTime) * regionObj.speed) % regionObj.region.length];
+        drawImg(reginThisFrame, (x) - Camera.x, (y) - Camera.y, reginThisFrame.w, reginThisFrame.h, context);
     }else{
-        drawImg(regionObj.region, (x) - Camera.x, (y) - Camera.y);
+        drawImg(regionObj.region, (x) - Camera.x, (y) - Camera.y, regionObj.region.w, regionObj.region.h, context);
     }
 }
 
