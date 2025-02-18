@@ -1,7 +1,7 @@
 
 let currentLevel;
 
-const devToolsEnabled = true;
+const devToolsEnabled = false;
 
 let Camera = {
     real : {
@@ -21,13 +21,21 @@ let Camera = {
 
 let ControlSchemes = {
     "Player1" : {
+        "deadZone" : 0.1, // the bottom edge of what I will consider using for input. if less than this, ignore this gamepad axis.
         "up" : "KeyW",
         "down" : "KeyL",
         "left" : "KeyA",
         "right" : "KeyD",
 
         "interact" : "Space",
-        "modifier" : "LeftShift"
+        "modifier" : "LeftShift",
+        "kick" : "KeyK",
+
+        "gamepad" : {
+            "horzAxis" : 0, // first axis in the <axis> key (left stick, horizontal axis)
+            "action" : 0, // first button in the <button> key (rep of x / cross)
+            "kick" : 5 // third button in the <button> key... (rep of right bumper)
+        }
     },
     
     "Player2" : {
@@ -39,6 +47,30 @@ let ControlSchemes = {
         "interact" : "Space",
         "modifier" : "LeftShift"
     }
+}
+
+const GamepadButtonIndex2UnderstandableWords = {
+    0 : "Bottom Face Button",
+    1 : "Right Face Button",
+    2 : "Left Face Button",
+    3 : "Top Face Button",
+
+    4 : "Left Bumper",
+    5 : "Right Bumper",
+    6 : "Left Trigger",
+    7 : "Right Trigger",
+
+    8 : "Select",
+    9 : "Start",
+
+    10 : "Left Stick Button",
+    11 : "right Stick Button",
+
+    12 : "Up On D-Pad",
+    13 : "Down On D-Pad",
+    14 : "Left On D-Pad",
+    15 : "Right On D-Pad",
+    16 : "PS / Middle Button" 
 }
 
 const SpriteAtlas = {
@@ -1088,11 +1120,16 @@ const GUIAtlas = {
 
     Presets : {
         KickPowerUpCard(){
+            let gamePadBind = GamepadButtonIndex2UnderstandableWords[ControlSchemes.Player1.gamepad.kick];
+            gamePadBind = " / " + gamePadBind; // set it to "<key> / gamePadBind";
+            if(gamePads === undefined){
+                gamePadBind = "";
+            }
             let card = GUIAtlas.CreatePowerupCardWithContent("KickPowerUpCard", `
                 <div>
                     <h3 style="text-align: center">Wall Kicking!!</h3>
-                    <p style="text-align: center">Press [K] while hugging a wall to kick off of it!!!</p>
-                    <p style="text-align: center">([K] to exit)</p>
+                    <p style="text-align: center">Press [K${gamePadBind}] while hugging a wall to kick off of it!!!</p>
+                    <p style="text-align: center">([K${gamePadBind}] to exit)</p>
                 </div>
             `);
 
@@ -1144,7 +1181,7 @@ const CutSceneAtlas = {
             kickCard = GUIAtlas.Presets.KickPowerUpCard();
         }
     
-        if( keyPressedWithin("KeyK", 1000) ){
+        if( getInputBtnWithin("kick", "kick", 1000) ){
             Players[0].movementInputEnabled = true;
             this.currentScene = undefined;
             this.timeOfStart = -1;

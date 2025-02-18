@@ -8,6 +8,8 @@ const deg2rad = Math.PI / 180;
 const rad2deg = 180 / Math.PI;
 
 // ===== Input =====
+    let Gamepads = [];
+
     canvasElement.addEventListener('mousemove', function(e){
         mouse.real.x = (e.offsetX / canvasElement.clientWidth) * canvasElement.width;
         mouse.real.y = (e.offsetY / canvasElement.clientHeight) * canvasElement.height;
@@ -23,6 +25,11 @@ const rad2deg = 180 / Math.PI;
     document.addEventListener('mouseup', function(e){
         mouse[e.button] = false;
     });
+
+    window.addEventListener("gamepadconnected", (e) => {
+        Gamepads = navigator.getGamepads();
+        console.log(e.gamepad);
+    })
 
     
 
@@ -94,6 +101,65 @@ const rad2deg = 180 / Math.PI;
 
     function btn(scheme, button){
         return (keys[scheme[button]] === true ? 1 : 0);
+    }
+
+    function gamepadAxis(axis, gamepadIndex = 0){
+        if(Gamepads[gamepadIndex] === undefined){
+            return 0;
+        }
+        return Gamepads[gamepadIndex].axes[ControlSchemes.Player1.gamepad[axis]];
+    }
+
+    function gamepadBtn(button, gamepadIndex = 0){
+        if(Gamepads[gamepadIndex] === undefined){
+            return 0;
+        }
+        return Gamepads[gamepadIndex].buttons[ControlSchemes.Player1.gamepad[button]].value;
+    }
+
+    function getInputAxis(axis, posBtn, negBtn, gamepadIndex = 0){
+        let btnAxis = -btn(ControlSchemes.Player1, negBtn) + btn(ControlSchemes.Player1, posBtn);
+        let gameAxis = gamepadAxis(axis, gamepadIndex);
+
+        if( Math.abs(gameAxis) < ControlSchemes.Player1.deadZone){
+            return btnAxis;
+        }
+
+        if( Math.abs(btnAxis) > 0 ){
+            return btnAxis;
+        }else {
+            return gameAxis;
+        }
+    }
+
+    function getInputBtn(padBtn, keyBtn, gamepadIndex = 0){
+        let btnVal = btn(ControlSchemes.Player1, keyBtn);
+        let gameVal = gamepadBtn(padBtn, gamepadIndex);
+        
+        if( Math.abs(gameVal) < ControlSchemes.Player1.deadZone){
+            return btnVal;
+        }
+
+        if( Math.abs(btnVal) > 0 ){
+            return btnVal;
+        }else {
+            return gameVal;
+        }
+    }
+
+    function getInputBtnWithin(padBtn, keyBtn, millisecs, gamepadIndex = 0){
+        let btnVal = btnPressedWithin(ControlSchemes.Player1, keyBtn, millisecs);
+        let gameVal = gamepadBtn(padBtn, gamepadIndex);
+        
+        if( Math.abs(gameVal) < ControlSchemes.Player1.deadZone){
+            return btnVal;
+        }
+
+        if( Math.abs(btnVal) > 0 ){
+            return btnVal;
+        }else {
+            return gameVal;
+        }
     }
 
     function keyPressedWithin(keyCode, millisecs){

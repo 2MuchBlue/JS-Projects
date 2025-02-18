@@ -173,7 +173,7 @@ class Player {
         }
 
         // checks if 1) has pressed the jump button recently, 2) making sure you haven't already jumped, 3) tests if you were on the ground in the last 150 milisecs.
-        if(btnPressedWithin(this.controlScheme, "up", 150) === 1 && this.extraData.canCoyoteTime && this.extraData.lastOnGroundTime + 150 > Time.now && this.movementInputEnabled){
+        if(getInputBtnWithin( "action", "up", 150) === 1 && this.extraData.canCoyoteTime && this.extraData.lastOnGroundTime + 150 > Time.now && this.movementInputEnabled){
             this.motion.y = -this.jumpPower;
             this.extraData.canCoyoteTime = false;
             this.extraData.hasJumped = true;
@@ -181,8 +181,7 @@ class Player {
             this.hitGroundParticle();
         }
 
-
-        let rawHorz = ( -btn(this.controlScheme, "left") + btn(this.controlScheme, "right")) * (this.movementInputEnabled ? 1 : 0);
+        let rawHorz = getInputAxis("horzAxis", "right", "left") * (this.movementInputEnabled ? 1 : 0);
         let targetmotion = {x : 0, y : 0};
         targetmotion.x = rawHorz * this.horizontalSpeed * Time.deltaTime;
 
@@ -211,9 +210,9 @@ class Player {
         if(devToolsEnabled) {ctx.fillText(this.dragState, this.x - Camera.x, this.y - Camera.y);}
         this.motion.x += (targetmotion.x - this.motion.x) * 0.4 * Time.deltaTime * dragVal;
 
-        if(rawHorz > 0.2){
+        if(rawHorz >= this.controlScheme.deadZone){
             this.extraData.flipped = true;
-        }else if(rawHorz < -0.2){
+        }else if(rawHorz <= -this.controlScheme.deadZone){
             this.extraData.flipped = false;
         }
 
@@ -223,7 +222,7 @@ class Player {
                 this.real.x -= Math.abs(this.motion.x) / this.motion.x;
             }
 
-            if(keyPressedWithin("KeyK", 50) && this.extraData.wallKicks > 0 && this.jumpPower > 0){
+            if(getInputBtn("kick", "kick") && this.extraData.wallKicks > 0 && this.jumpPower > 0){
                 this.motion.x = -Math.abs(this.motion.x) / this.motion.x * Time.deltaTime * 0.5;
                 this.motion.y = -this.jumpPower;
                 this.extraData.wallKicks -= 1;
