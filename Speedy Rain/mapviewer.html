@@ -41,6 +41,13 @@
         canvas{
             image-rendering: pixelated; image-rendering: crisp-edges;
         }
+
+        .notification{
+            width: 85px;
+            border-radius: 10px;
+            background-color: #ffffff;
+            color: #1d0435;
+        }
     </style>
 
     
@@ -49,6 +56,7 @@
         <div id="levelSelect" style="grid-area: mapSelect; display: flex; flex-direction: column; align-items: center; min-width: 100px;">
             <div>
                 <button onclick="new function() { hideMainLayer = !hideMainLayer }">hide main layer Toggle</button>
+                <button onclick="new function() { apply2background = !apply2background }">What Layer To Place Too Toggle</button>
             </div>
             <button onclick="changeArea(AreaAtlas.LabArea.WakeUp01)">WakeUp01</button>
             <button onclick="changeArea(AreaAtlas.LabArea['1afterWakeUp'])">1afterWakeUp</button>
@@ -58,8 +66,9 @@
             <button onclick="changeArea(AreaAtlas.LabArea.WallKickIntro.introRoom)">WallKickIntro : introRoom</button>
             <button onclick="changeArea(AreaAtlas.LabArea.WallKickIntro.longFall)">WallKickIntro : longFall</button>
             <button onclick="changeArea(AreaAtlas.LabArea.WallKickIntro.longFallCatch)">WallKickIntro : longFallCatch</button>
-            <button onclick="changeArea(AreaAtlas.LabArea.WallKickIntro.WallKickTutorial)">WallKickIntro : WallKickTutorial</button>
             <button onclick="changeArea(AreaAtlas.LabArea.WallKickIntro.WallKickGet)">WallKickIntro : WallKickGet</button>
+            <button onclick="changeArea(AreaAtlas.LabArea.WallKickIntro.WallKickTutorial)">WallKickIntro : WallKickTutorial</button>
+            <button onclick="changeArea(AreaAtlas.LabArea.WallKickIntro.WallKickChallange)">WallKickIntro : WallKickChallange</button>
         </div>
 
         <div style="grid-area: tiles; overflow-y: scroll;">
@@ -71,6 +80,8 @@
 
         <div style="grid-area: entities">entities</div>
         
+        <div style="width: 100px;" id="notificationHolder"></div>
+
     </div>
     <pre id="dataHolder"></pre>
     <script src="math2.js"></script>
@@ -83,6 +94,7 @@
         let hideMainLayer = false;
         let currentTileKey = " ";
         let dataHolder = document.getElementById("dataHolder");
+        let apply2background = false;
 
         /*let element = document.createElement("button");
         element.innerText = AreaAtlasKeys[i];
@@ -170,9 +182,13 @@
 
             drawTileRegion(Math.floor((mouse.x + Camera.x) / 19) * 19, Math.floor((mouse.y + Camera.y) / 19) * 19, currentLevel.key[currentTileKey]);
             if(mouse[0] === true){
-                setTile(Math.floor((mouse.x + Camera.x) / 19), Math.floor((mouse.y + Camera.y) / 19), currentTileKey);
+                if(apply2background){
+                    setBackgroundTile(Math.floor((mouse.x + Camera.x) / 19), Math.floor((mouse.y + Camera.y) / 19), currentTileKey)
+                }else{
+                    setTile(Math.floor((mouse.x + Camera.x) / 19), Math.floor((mouse.y + Camera.y) / 19), currentTileKey);
+                }
 
-                dataHolder.innerText = JSON.stringify(currentLevel.layout, "", " ");
+                dataHolder.innerText = JSON.stringify(( hideMainLayer ? currentLevel.background : currentLevel.layout), "", " ");
             }
 
             drawLevel(true);
@@ -217,6 +233,23 @@
             ctx.fillText(Math.round(1000 / Time.deltaTime), 0, 190);
             
             
+        }
+
+        function createNotification(content, lifetime = 2000 ){
+
+            let localElement = document.createElement("div");
+            let holder = document.getElementById("notificationHolder")
+
+            localElement.innerHTML = content;
+
+            localElement.classList = "notification";
+
+            let elementInDom = holder.appendChild(localElement);
+            
+            setTimeout( () => {
+                elementInDom.remove();
+            }, lifetime)
+
         }
     </script>
 </body>

@@ -22,7 +22,7 @@ function drawImg( region, x, y, w = -1, h = -1, context = ctx ){
 }
 
 let Players = [
-    new Player("player1", ControlSchemes.Player1, /*0.15*/ 0.2, 1.5 /* set to 1.5 in a Lab:JumpGet ItemPickup */, 0.025),
+    new Player("player1", ControlSchemes.Player1, /*0.15*/ 0.2, 1.5 /* set to 1.5 in a Lab:JumpGet ItemPickup */, 0.02),
     //new Player("player2", ControlSchemes.Player2, 0.15, 1.5)
 ];
 
@@ -185,12 +185,26 @@ function setTile(x, y, replaceWithKey, level = currentLevel){
     level.layout[y] = level.layout[y].slice(0, x) + replaceWithKey + level.layout[y].slice(x + 1);
 }
 
+function setBackgroundTile(x, y, replaceWithKey, level = currentLevel){
+    if(level.background[y] === undefined || level.layout[y][x] === undefined){
+        console.log("no background");
+        return;
+    }
+    
+    level.background[y] = level.background[y].slice(0, x) + replaceWithKey + level.background[y].slice(x + 1);
+
+}
+
 function getTile(x, y, level = currentLevel){
     if(level.layout[y] === undefined || level.layout[y][x] === undefined){
         console.log("NULL!!!!!!!!!!!!!!!!!!!!!!");
         return true;
     }
     return level.key[level.layout[y][x]].solid;
+}
+
+function getWorldTile(x, y, level = currentLevel){
+    return getTile(Math.round((x) / 19), Math.round((y) / 19), level);
 }
 
 function drawArrow(x, y, angle, primaryColor, secondaryColor, tail = 0){

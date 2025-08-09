@@ -67,6 +67,8 @@ class Player {
             "player" : true
         };
 
+        this.wallKickPower = 7.5;
+
         this.movementInputEnabled = true;
 
         this.dragState = "in air";
@@ -127,7 +129,21 @@ class Player {
         }
     }
 
+    #tryWallKick(){
+        if(getInputBtn("kick", "kick")){ 
+            let direction = Math.abs(this.motion.x) / this.motion.x;
+            if ( getTile(Math.round((this.real.x + (direction * 5)) / 19), Math.round((this.real.y) / 19)) && this.extraData.wallKicks > 0 && this.jumpPower > 0 && this.extraData.kickedThisFrame === false ){
+                this.motion.x = -direction * this.wallKickPower;
+                this.motion.y = -this.jumpPower;
+                this.extraData.wallKicks -= 1;
+                this.extraData.wallKickTime = 0;
+                this.extraData.kickedThisFrame = true;
+            }
+        }
+    }
+
     tick(){
+        this.extraData.kickedThisFrame = false;
 
         //this.dragState = "in air";
 
@@ -215,20 +231,13 @@ class Player {
         }else if(rawHorz <= -this.controlScheme.deadZone){
             this.extraData.flipped = false;
         }
-
+        
+        this.#tryWallKick();
         this.real.x += this.motion.x;
+        
         if(this.hitbox){
             while(this.hitbox){
                 this.real.x -= Math.abs(this.motion.x) / this.motion.x;
-            }
-
-            if(getInputBtn("kick", "kick") && this.extraData.wallKicks > 0 && this.jumpPower > 0){
-                this.motion.x = -Math.abs(this.motion.x) / this.motion.x * Time.deltaTime * 0.5;
-                this.motion.y = -this.jumpPower;
-                this.extraData.wallKicks -= 1;
-                this.extraData.wallKickTime = 0;
-            }else{
-                this.motion.x = 0;
             }
             
             this.extraData.canWallJump = true;

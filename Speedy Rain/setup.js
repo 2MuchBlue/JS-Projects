@@ -25,11 +25,12 @@ const rad2deg = 180 / Math.PI;
     document.addEventListener('mouseup', function(e){
         mouse[e.button] = false;
     });
-
+    
     window.addEventListener("gamepadconnected", (e) => {
         Gamepads = navigator.getGamepads();
         console.log(e.gamepad);
     })
+
 
     
 
@@ -103,6 +104,7 @@ const rad2deg = 180 / Math.PI;
         return (keys[scheme[button]] === true ? 1 : 0);
     }
 
+
     function gamepadAxis(axis, gamepadIndex = 0){
         if(Gamepads[gamepadIndex] === undefined){
             return 0;
@@ -161,6 +163,7 @@ const rad2deg = 180 / Math.PI;
             return gameVal;
         }
     }
+
 
     function keyPressedWithin(keyCode, millisecs){
         if(keysPressTime[keyCode] + millisecs > Time.now){

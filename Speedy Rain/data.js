@@ -21,7 +21,6 @@ let Camera = {
 
 let ControlSchemes = {
     "Player1" : {
-        "deadZone" : 0.1, // the bottom edge of what I will consider using for input. if less than this, ignore this gamepad axis.
         "up" : "KeyW",
         "down" : "KeyL",
         "left" : "KeyA",
@@ -30,6 +29,8 @@ let ControlSchemes = {
         "interact" : "Space",
         "modifier" : "LeftShift",
         "kick" : "KeyK",
+
+        "deadZone" : 0.1,
 
         "gamepad" : {
             "horzAxis" : 0, // first axis in the <axis> key (left stick, horizontal axis)
@@ -799,8 +800,6 @@ const AreaAtlas = {
                 new LevelTransitionTrigger(494, 95, 19, 19 * 2, 19, 57, "LabArea/JumpGetP2" ),
 
                 new LevelTransitionTrigger(0, 57, 19, 19 * 2, 323, 171, "LabArea/WallKickIntro/introRoom" ),
-                
-                new ItemPickup(152, 266 - 9, TileAtlas.pickups.powerup, () => {Players[0].wallKicksAllowed = 2; CutSceneAtlas.currentScene = CutSceneAtlas.kickPickup; /*alert("Try \"W\" To Jump!!!!")*/}, (thing2test, me) => { return BasicAreaChecks.inCircle(me.x, me.y, 19*1.5, thing2test.x, thing2test.y); } ),
             ],
 
             /*"backdropEntities" : [
@@ -995,7 +994,7 @@ const AreaAtlas = {
                     new HangingWireEntity(152, 114, 19 * 5, 0.4, "#5f1585"),
                     new HangingWireEntity(57, 171, 19 * 5.3, 0.45, "#5f1585"),
 
-                    //new LevelTransitionTrigger()
+                    new LevelTransitionTrigger(380, 266, 19, 19 * 2, 19, 133, "LabArea/WallKickIntro/WallKickGet")
                 ]
             },
 
@@ -1010,19 +1009,24 @@ const AreaAtlas = {
 
                 "layout" : [
                     "04      80",
-                    "04      80",
                     "04      76",
+                    "04        ",
                     "04        ",
                     "04        ",
                     "65      12",
                     "        80",
                     "        80",
                     "22222222%0",
-                    "0000000000",
+                    "0000000000"
                 ],
 
                 "entities" : [
+                    new ItemPickup(95, 133, TileAtlas.pickups.powerup, () => {Players[0].wallKicksAllowed = 2; CutSceneAtlas.currentScene = CutSceneAtlas.kickPickup; /*alert("Try \"W\" To Jump!!!!")*/}, (thing2test, me) => { return BasicAreaChecks.inCircle(me.x, me.y, 19*1.5, thing2test.x, thing2test.y); } ),
+
                     new LevelTransitionTrigger(0, 114, 9.5, 19 * 2, 361, 285, "LabArea/WallKickIntro/longFallCatch"),
+                    
+                    new LevelTransitionTrigger(171, 38, 19, 19 * 3, 19, 342, "LabArea/WallKickIntro/WallKickTutorial"),
+
                     new DrawShape(() => {
                         function moveInWorldTo(x, y){
                             ctx.moveTo(x - Camera.x, y - Camera.y);
@@ -1101,12 +1105,57 @@ const AreaAtlas = {
                 ],
 
                 "entities" : [
+                    new LevelTransitionTrigger(0, 323, 19, 19 * 2, 152, 76, "LabArea/WallKickIntro/WallKickGet"),
+                    new LevelTransitionTrigger(0, 133, 19, 19 * 3, 266, 418, "LabArea/WallKickIntro/WallKickChallange")
+                ]
+            },
 
+            "WallKickChallange" : {
+                "key" : keySets.OvergrownLabSet,
+
+                "apple" : [
+                    "123", "!#",
+                    "8_4", "&%",
+                    "765"
+                ],
+
+                "layout" : [
+                    "0000000000000000",
+                    "0000000000000000",
+                    "000!666666#00000",
+                    "0!65      7#0000",
+                    "65         80000",
+                    "           80000",
+                    "    1223   76#00",
+                    "2222%!65     800",
+                    "000!65       800",
+                    "00j4         800",
+                    "0004     1222%00",
+                    "00j4     7666#00",
+                    "000&23       800",
+                    "000!65       800",
+                    "00!5   123   800",
+                    "004          800",
+                    "004          800",
+                    "004     12222%00",
+                    "00&23   766#0000",
+                    "00004      766#0",
+                    "00004         76",
+                    "00004           ",
+                    "0000&3          ",
+                    "00000&2222222222",
+                    "0000000000000000",
+                    "0000000000000000"
+                   ],
+
+                "entities" : [
+                    new LevelTransitionTrigger(285, 399, 19, 19 * 2, 19, 171, "LabArea/WallKickIntro/WallKickTutorial")
                 ]
             }
         },
     }
 }
+
 
 const GUIAtlas = {
     CreatePowerupCardWithContent(id, content){
@@ -1181,7 +1230,7 @@ const CutSceneAtlas = {
             kickCard = GUIAtlas.Presets.KickPowerUpCard();
         }
     
-        if( getInputBtnWithin("kick", "kick", 1000) ){
+        if( keyPressedWithin("KeyK", 1000) ){
             Players[0].movementInputEnabled = true;
             this.currentScene = undefined;
             this.timeOfStart = -1;
